@@ -9,7 +9,6 @@ scale_factor = 0.2
 scaled_width = int(width * scale_factor)
 scaled_height = int(height * scale_factor)
 
-# TODO: Subtract 0.5 from each pixel's intensity values
 training_datagen = ImageDataGenerator(rescale = 1./255)
 
 training_generator = training_datagen.flow_from_directory(
@@ -37,7 +36,6 @@ model = Sequential([
   Dense(1, activation='sigmoid'),
 ])
 
-# Compile the model.
 model.compile(
   optimizer='rmsprop',
   loss='binary_crossentropy',
