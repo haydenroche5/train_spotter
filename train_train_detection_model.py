@@ -1,10 +1,5 @@
-# The full CNN code!
-####################
-import numpy as np
-import mnist
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
-from keras.utils import to_categorical
 from keras.preprocessing.image import ImageDataGenerator
 
 width = 1920
