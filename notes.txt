@@ -1,0 +1,1 @@
+- We were stuck at 90.55% validation accuracy across multiple epochs until I changed the activation of the convolutional layer to relu.
