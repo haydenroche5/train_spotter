@@ -22,18 +22,17 @@ logger.addHandler(ch)
 
 width = 1920
 height = 1080
+threshold = 0.96
+logger.info('THRESHOLD: {}'.format(threshold))
 
 model = load_model('train_detection_cnn')
 input_img_height, input_img_width = model.layers[0].input_shape[1:3]
 
 def detect_train(frame):
     prediction_value = model.predict(frame).flatten()[0]
-    threshold = 0.98
     if prediction_value > threshold:
         logger.info('Prediction value: {}'.format(prediction_value))
-        logger.info('Prediction: train')
-    # else:
-    #     logger.info('Prediction: no_train')
+        logger.info('TRAIN!')
 
 while (True):
     try:
