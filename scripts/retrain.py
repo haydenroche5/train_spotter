@@ -1,4 +1,4 @@
-# import logging
+import logging
 import argparse
 from utils.hashing import get_dir_hash
 from detection.model import Model
@@ -22,17 +22,21 @@ def train_model(data_dir_path, output_dir_path, num_epochs, batch_size,
     model.train(num_epochs, patience, output_dir_path)
 
 
+def get_date():
+    return date.today().strftime('%Y%m%d')
+
+
 def stash_local_changes():
-    command = 'git stash save "retrain_{}"'.format(date.today())
-    subprocess.check_call(shlex.split(command))
+    command = 'git stash save "retrain_{}"'.format(get_date())
+    result = subprocess.run(shlex.split(command), capture_output=True)
+    if 'No local changes to save' in result.stdout.decode():
+        return False
+    return True
 
 
 def pop_local_changes():
     command = 'git stash pop'
-    try:
-        subprocess.check_call(shlex.split(command))
-    except CalledProcessError as error:
-        print(error)
+    subprocess.check_call(shlex.split(command))
 
 
 def pull_latest_data():
@@ -41,25 +45,29 @@ def pull_latest_data():
 
 
 def main(args):
-    # if not os.path.exists(args.output_dir):
-    #     os.makedirs(args.output_dir)
-    #     os.makedirs(os.path.join(args.output_dir, 'log/'))
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
 
-    # logger = logging.getLogger(__name__)
-    # logger.setLevel(logging.DEBUG)
-    # retrain_log_path = os.path.join(args.output_dir, 'log/retrain.log')
-    # fh = logging.FileHandler(retrain_log_path, mode='w')
-    # fh.setLevel(logging.DEBUG)
-    # ch = logging.StreamHandler()
-    # ch.setLevel(logging.ERROR)
-    # formatter = logging.Formatter('[%(asctime)s] %(message)s',
-    #                               datefmt='%m-%d-%Y %H:%M:%S')
-    # fh.setFormatter(formatter)
-    # ch.setFormatter(formatter)
-    # logger.addHandler(fh)
-    # logger.addHandler(ch)
+    log_dir_path = os.path.join(args.output_dir, 'log/')
+    if not os.path.exists(log_dir_path):
+        os.makedirs(log_dir_path)
 
-    stash_local_changes()
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    retrain_log_path = os.path.join(args.output_dir,
+                                    'log/retrain_{}.log'.format(get_date()))
+    fh = logging.FileHandler(retrain_log_path, mode='w')
+    fh.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('[%(asctime)s] %(message)s',
+                                  datefmt='%m-%d-%Y %H:%M:%S')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
+    saved = stash_local_changes()
     try:
         pull_latest_data()
         if not args.force:
@@ -68,22 +76,23 @@ def main(args):
             with open(current_data_hash_file, 'r') as file:
                 current_hash = file.read()
             new_hash = get_dir_hash(args.data_dir)
-            print('Current hash: {}'.format(current_hash))
-            print('New hash: {}'.format(new_hash))
+            logger.info('Current hash: {}'.format(current_hash))
+            logger.info('New hash: {}'.format(new_hash))
             if new_hash != current_hash:
-                print('Data has changed, re-training.')
+                logger.info('Data has changed, re-training.')
                 with open(current_data_hash_file, 'w') as file:
                     file.write(new_hash)
                 train_model(args.data_dir, args.output_dir, args.num_epochs,
                             args.batch_size, args.patience)
             else:
-                print('Data has not changed, not re-training.')
+                logger.info('Data has not changed, not re-training.')
         else:
-            print('Forcibly retraining.')
+            logger.info('Forcibly retraining.')
             train_model(args.data_dir, args.output_dir, args.num_epochs,
                         args.batch_size, args.patience)
     finally:
-        pop_local_changes()
+        if saved:
+            pop_local_changes()
 
 
 if __name__ == '__main__':
