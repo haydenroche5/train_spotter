@@ -27,7 +27,8 @@ def get_date():
 
 
 def stash_local_changes():
-    command = 'git stash save "retrain_{}"'.format(get_date())
+    command = 'git stash save --include-untracked "retrain_{}"'.format(
+        get_date())
     result = subprocess.run(shlex.split(command), capture_output=True)
     if 'No local changes to save' in result.stdout.decode():
         return False
@@ -64,7 +65,6 @@ def push_latest_model(output_dir_path):
 
 
 def main(args):
-    push_latest_model(args.output_dir)
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
@@ -91,7 +91,7 @@ def main(args):
     try:
         pull_latest_data()
         if not args.force:
-            current_data_hash_file_path_path = 'current_data_hash.md5'
+            current_data_hash_file_path = 'current_data_hash.md5'
             current_hash = ''
             with open(current_data_hash_file_path, 'r') as file:
                 current_hash = file.read()
