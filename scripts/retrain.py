@@ -3,6 +3,9 @@ import argparse
 from utils.hashing import get_dir_hash
 from detection.model import Model
 import os.path
+import subprocess
+import shlex
+from datetime import date
 
 
 def train_model(data_dir_path, output_dir_path, num_epochs, batch_size,
@@ -18,10 +21,25 @@ def train_model(data_dir_path, output_dir_path, num_epochs, batch_size,
     model.train(num_epochs, patience, output_dir_path)
 
 
+def stash_local_changes():
+    command = 'git stash save "retrain_{}"'.format(date.today())
+    subprocess.check_call(shlex.split(command))
+
+
+def pop_local_changes():
+    command = 'git stash pop'
+    subprocess.check_call(shlex.split(command))
+
+
+def pull_latest_data():
+    command = 'git pull origin master --rebase'
+    subprocess.check_call(shlex.split(command))
+
+
 def main(args):
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-        os.makedirs(os.path.join(args.output_dir, 'log/'))
+    # if not os.path.exists(args.output_dir):
+    #     os.makedirs(args.output_dir)
+    #     os.makedirs(os.path.join(args.output_dir, 'log/'))
 
     # logger = logging.getLogger(__name__)
     # logger.setLevel(logging.DEBUG)
@@ -37,26 +55,31 @@ def main(args):
     # logger.addHandler(fh)
     # logger.addHandler(ch)
 
-    if not args.force:
-        current_data_hash_file = 'current_data_hash.md5'
-        current_hash = ''
-        with open(current_data_hash_file, 'r') as file:
-            current_hash = file.read()
-        new_hash = get_dir_hash(args.data_dir)
-        print('Current hash: {}'.format(current_hash))
-        print('New hash: {}'.format(new_hash))
-        if new_hash != current_hash:
-            print('Data has changed, re-training.')
-            with open(current_data_hash_file, 'w') as file:
-                file.write(new_hash)
+    stash_local_changes()
+    try:
+        pull_latest_data()
+        if not args.force:
+            current_data_hash_file = 'current_data_hash.md5'
+            current_hash = ''
+            with open(current_data_hash_file, 'r') as file:
+                current_hash = file.read()
+            new_hash = get_dir_hash(args.data_dir)
+            print('Current hash: {}'.format(current_hash))
+            print('New hash: {}'.format(new_hash))
+            if new_hash != current_hash:
+                print('Data has changed, re-training.')
+                with open(current_data_hash_file, 'w') as file:
+                    file.write(new_hash)
+                train_model(args.data_dir, args.output_dir, args.num_epochs,
+                            args.batch_size, args.patience)
+            else:
+                print('Data has not changed, not re-training.')
+        else:
+            print('Forcibly retraining.')
             train_model(args.data_dir, args.output_dir, args.num_epochs,
                         args.batch_size, args.patience)
-        else:
-            print('Data has not changed, not re-training.')
-    else:
-        print('Forcibly retraining.')
-        train_model(args.data_dir, args.output_dir, args.num_epochs,
-                    args.batch_size, args.patience)
+    finally:
+        pop_local_changes()
 
 
 if __name__ == '__main__':
