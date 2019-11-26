@@ -44,7 +44,27 @@ def pull_latest_data():
     subprocess.check_call(shlex.split(command))
 
 
+def push_latest_model(output_dir_path):
+    command = 'git add {}'.format(output_dir_path)
+    subprocess.check_call(shlex.split(command))
+    command = 'git commit -m "{} retraining."'.format(get_date())
+    subprocess.check_call(shlex.split(command))
+    current_version_file_path = 'current_version.txt'
+    with open(current_version_file_path, "r+") as file:
+        current_version = int(file.read())
+        file.seek(0)
+        new_version = current_version + 1
+        file.write(str(new_version) + '\n')
+        file.truncate()
+    command = 'git tag -a v{version} -m "New model version: {version}"'.format(
+        version=new_version)
+    subprocess.check_call(shlex.split(command))
+    command = 'git push origin master'
+    subprocess.check_call(shlex.split(command))
+
+
 def main(args):
+    push_latest_model(args.output_dir)
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
@@ -71,25 +91,27 @@ def main(args):
     try:
         pull_latest_data()
         if not args.force:
-            current_data_hash_file = 'current_data_hash.md5'
+            current_data_hash_file_path_path = 'current_data_hash.md5'
             current_hash = ''
-            with open(current_data_hash_file, 'r') as file:
+            with open(current_data_hash_file_path, 'r') as file:
                 current_hash = file.read()
             new_hash = get_dir_hash(args.data_dir)
             logger.info('Current hash: {}'.format(current_hash))
             logger.info('New hash: {}'.format(new_hash))
             if new_hash != current_hash:
                 logger.info('Data has changed, re-training.')
-                with open(current_data_hash_file, 'w') as file:
+                with open(current_data_hash_file_path, 'w') as file:
                     file.write(new_hash)
                 train_model(args.data_dir, args.output_dir, args.num_epochs,
                             args.batch_size, args.patience)
+                push_latest_model(args.output_dir)
             else:
                 logger.info('Data has not changed, not re-training.')
         else:
             logger.info('Forcibly retraining.')
             train_model(args.data_dir, args.output_dir, args.num_epochs,
                         args.batch_size, args.patience)
+            push_latest_model(args.output_dir)
     finally:
         if saved:
             pop_local_changes()
