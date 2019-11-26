@@ -1,1 +1,5 @@
-- We were stuck at 90.55% validation accuracy across multiple epochs until I changed the activation of the convolutional layer to relu.
+- Get train detector up and running on the RPi.
+- Set up a workflow that does the following:
+1) Checks data/ for new images by hashing and comparing the hash to the previous hash. If they don't match, split 90% of data into training, 10% into validation, re-train, and commit the results with a version number to git (tag).
+2) Push this.
+3) RPi should pull the repo daily to get the latest.
