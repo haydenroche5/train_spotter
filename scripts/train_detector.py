@@ -28,11 +28,19 @@ logger.info('THRESHOLD: {}'.format(threshold))
 model = load_model('train_detection_cnn')
 input_img_height, input_img_width = model.layers[0].input_shape[1:3]
 
-def detect_train(frame):
+counter = 0
+def detect_train(orig, frame):
     prediction_value = model.predict(frame).flatten()[0]
     if prediction_value > threshold:
         logger.info('Prediction value: {}'.format(prediction_value))
         logger.info('TRAIN!')
+        global counter
+        orig.save('detected_trains/train{}.jpg'.format(counter))
+        counter += 1
+
+        return True
+
+    return False
 
 while (True):
     try:
@@ -42,7 +50,7 @@ while (True):
         frame = np.array(image_resized)
         frame_scaled = frame / 255.0
         frame_scaled_expanded = np.expand_dims(frame_scaled, axis = 0)
-        detect_train(frame_scaled_expanded)
-        time.sleep(1)
+        detect_train(image, frame_scaled_expanded)
+        time.sleep(3)
     except ConnectionError:
         print('Timed out trying to get an image from the webcam.')
