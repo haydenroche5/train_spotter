@@ -4,6 +4,7 @@ from utils.hashing import get_dir_hash
 from detection.model import Model
 import os.path
 import subprocess
+from subprocess import CalledProcessError
 import shlex
 from datetime import date
 
@@ -28,7 +29,10 @@ def stash_local_changes():
 
 def pop_local_changes():
     command = 'git stash pop'
-    subprocess.check_call(shlex.split(command))
+    try:
+        subprocess.check_call(shlex.split(command))
+    except CalledProcessError as error:
+        print(error)
 
 
 def pull_latest_data():
