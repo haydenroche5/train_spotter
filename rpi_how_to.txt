@@ -1,0 +1,6 @@
+- Get the appropriate wheel for tensorflow from here: https://github.com/PINTO0309/Tensorflow-bin/.
+- python3 -m venv venv (in ~/detector/).
+- source venv/bin/activate.
+- pip install <tensorflow wheel from earlier, python 3.5>.
+- pip install pillow.
+- Was able to run detector after this.
