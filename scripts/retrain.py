@@ -94,9 +94,6 @@ def main(args):
         if not args.force:
             current_data_hash_file_path = os.path.join(
                 args.output_dir, 'current_data_hash.md5')
-            print('current_data_hash_file_path: {}'.format(
-                current_data_hash_file_path))
-            current_hash = ''
             with open(current_data_hash_file_path, 'r') as file:
                 current_hash = file.read()
             new_hash = get_dir_hash(args.data_dir)
