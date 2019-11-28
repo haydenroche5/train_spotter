@@ -50,7 +50,8 @@ def push_latest_model(output_dir_path):
     subprocess.check_call(shlex.split(command))
     command = 'git commit -m "{} retraining."'.format(get_date())
     subprocess.check_call(shlex.split(command))
-    current_version_file_path = 'current_version.txt'
+    current_version_file_path = os.path.join(output_dir_path,
+                                             'current_version.txt')
     with open(current_version_file_path, "r+") as file:
         current_version = int(file.read())
         file.seek(0)
@@ -91,7 +92,10 @@ def main(args):
     try:
         pull_latest_data()
         if not args.force:
-            current_data_hash_file_path = 'current_data_hash.md5'
+            current_data_hash_file_path = os.path.join(
+                args.output_dir, 'current_data_hash.md5')
+            print('current_data_hash_file_path: {}'.format(
+                current_data_hash_file_path))
             current_hash = ''
             with open(current_data_hash_file_path, 'r') as file:
                 current_hash = file.read()
@@ -115,6 +119,7 @@ def main(args):
     finally:
         if saved:
             pop_local_changes()
+    logger.info('Retraining complete.')
 
 
 if __name__ == '__main__':
