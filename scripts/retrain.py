@@ -157,6 +157,7 @@ if __name__ == '__main__':
         '--patience',
         dest='patience',
         default=3,
+        type=int,
         help=
         'Max number of epochs to train for without validation loss improvement.'
     )
