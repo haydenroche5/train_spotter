@@ -7,6 +7,18 @@ import subprocess
 from subprocess import CalledProcessError
 import shlex
 from datetime import date
+import sys
+
+
+class StdLogger(object):
+    def __init__(self, logger):
+        self.logger = logger
+
+    def write(self, message):
+        self.logger.info(message)
+
+    def flush(self):
+        pass
 
 
 def train_model(data_dir_path, output_dir_path, num_epochs, batch_size,
@@ -79,14 +91,13 @@ def main(args):
                                     'log/retrain_{}.log'.format(get_date()))
     fh = logging.FileHandler(retrain_log_path, mode='w')
     fh.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
     formatter = logging.Formatter('[%(asctime)s] %(message)s',
                                   datefmt='%m-%d-%Y %H:%M:%S')
     fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
     logger.addHandler(fh)
-    logger.addHandler(ch)
+
+    sys.stdout = StdLogger(logger)
+    sys.stderr = StdLogger(logger)
 
     saved = stash_local_changes()
     try:
