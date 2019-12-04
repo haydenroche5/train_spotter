@@ -96,8 +96,8 @@ def main(args):
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
-    sys.stdout = StdLogger(logger)
-    sys.stderr = StdLogger(logger)
+    # sys.stdout = StdLogger(logger)
+    # sys.stderr = StdLogger(logger)
 
     saved = stash_local_changes()
     try:
