@@ -99,7 +99,7 @@ def main(args):
     # sys.stdout = StdLogger(logger)
     # sys.stderr = StdLogger(logger)
 
-    saved = stash_local_changes()
+    # saved = stash_local_changes()
     try:
         pull_latest_data()
         if not args.force:
@@ -126,7 +126,8 @@ def main(args):
             push_latest_model(args.output_dir)
     finally:
         if saved:
-            pop_local_changes()
+            pass
+            # pop_local_changes()
     logger.info('Retraining complete.')
 
 
