@@ -100,6 +100,7 @@ def main(args):
     # sys.stderr = StdLogger(logger)
 
     # saved = stash_local_changes()
+    saved = True
     try:
         pull_latest_data()
         if not args.force:
