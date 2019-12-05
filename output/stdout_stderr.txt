@@ -1,0 +1,1 @@
+/home/cohub/anaconda3/envs/cv/bin/python: Error while finding module specification for 'scripts.retrain' (ModuleNotFoundError: No module named 'scripts')
