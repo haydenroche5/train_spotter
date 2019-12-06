@@ -25,8 +25,7 @@ def main(args):
 
     width = 1920
     height = 1080
-    threshold = 0.96
-    logger.info('THRESHOLD: {}'.format(threshold))
+    logger.info('THRESHOLD: {}'.format(args.threshold))
 
     model = load_model(args.model_dir)
     input_img_height, input_img_width = model.layers[0].input_shape[1:3]
@@ -44,7 +43,7 @@ def main(args):
             frame_scaled_expanded = np.expand_dims(frame_scaled, axis=0)
             prediction_value = np.array(
                 model.predict_on_batch(frame_scaled_expanded)).flatten()[0]
-            if prediction_value > threshold:
+            if prediction_value > args.threshold:
                 logger.info('Prediction value: {}'.format(prediction_value))
                 logger.info('TRAIN!')
             time.sleep(3)
@@ -64,4 +63,11 @@ if __name__ == '__main__':
                             dest='camera_ip',
                             required=True,
                             help='IP address of the webcam.')
+    arg_parser.add_argument(
+        '--threshold',
+        dest='threshold',
+        required=False,
+        type=float,
+        default=0.5,
+        help='Probability threshold for detecting a train.')
     main(arg_parser.parse_args())
