@@ -42,8 +42,8 @@ def main(args):
             frame = np.array(image_resized)
             frame_scaled = frame / 255.0
             frame_scaled_expanded = np.expand_dims(frame_scaled, axis=0)
-            prediction_value = model.predict(
-                frame_scaled_expanded).flatten()[0]
+            prediction_value = np.array(
+                model.predict_on_batch(frame_scaled_expanded)).flatten()[0]
             if prediction_value > threshold:
                 logger.info('Prediction value: {}'.format(prediction_value))
                 logger.info('TRAIN!')
