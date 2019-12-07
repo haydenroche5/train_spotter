@@ -7,6 +7,8 @@ import logging
 import argparse
 from tensorflow.keras.models import load_model
 from requests.exceptions import ConnectionError
+from datetime import datetime
+import pickle
 
 
 def main(args):
@@ -29,8 +31,14 @@ def main(args):
 
     model = load_model(args.model_dir)
     input_img_height, input_img_width = model.layers[0].input_shape[1:3]
+    ongoing_event = False
+    ongoing_event_moments = []
+    moment_counter = 0
+    event_complete_threshold = 5
+    event_completion_progress = 0
+    event_number = 0
 
-    while (True):
+    while True:
         try:
             response = requests.get(
                 'http://{}/axis-cgi/jpg/image.cgi?resolution={}x{}'.format(
@@ -43,9 +51,61 @@ def main(args):
             frame_scaled_expanded = np.expand_dims(frame_scaled, axis=0)
             prediction_value = np.array(
                 model.predict_on_batch(frame_scaled_expanded)).flatten()[0]
-            if prediction_value > args.threshold:
+            if ongoing_event:
+                if prediction_value <= args.threshold:
+                    event_completion_progress += 1
+                else:
+                    event_completion_progress = 0
+
+                if event_completion_progress > event_complete_threshold:
+                    ongoing_event = False
+                    event_file_path = os.path.join(
+                        args.event_dir, 'event_{}'.format(event_number))
+                    with open(event_file_path, 'wb') as event_file:
+                        pickle.dump(ongoing_event_moments, event_file)
+                    logger.info('##############################')
+                    logger.info('End event #{}'.format(event_number))
+                    logger.info('##############################')
+                    moment_counter = 0
+                    event_number += 1
+                    ongoing_event_moments = []
+                else:
+                    # TODO: factor out
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    img_path = os.path.join(
+                        args.event_dir, 'images',
+                        '{}_{}.jpg'.format(event_number, moment_counter))
+                    image.save(img_path)
+                    moment_counter += 1
+                    event_moment = {
+                        'event_number': event_number,
+                        'timestamp': timestamp,
+                        'prediction_value': prediction_value,
+                        'img_path': img_path,
+                    }
+                    ongoing_event_moments.append(event_moment)
+                    logger.info(
+                        'Prediction value: {}'.format(prediction_value))
+
+            elif prediction_value > args.threshold:
+                ongoing_event = True
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                img_path = os.path.join(
+                    args.event_dir, 'images',
+                    '{}_{}.jpg'.format(event_number, moment_counter))
+                image.save(img_path)
+                moment_counter += 1
+                event_moment = {
+                    'event_number': event_number,
+                    'timestamp': timestamp,
+                    'prediction_value': prediction_value,
+                    'img_path': img_path,
+                }
+                ongoing_event_moments.append(event_moment)
+                logger.info('##############################')
+                logger.info('Begin event #{}'.format(event_number))
+                logger.info('##############################')
                 logger.info('Prediction value: {}'.format(prediction_value))
-                logger.info('TRAIN!')
             time.sleep(3)
         except ConnectionError:
             raise Exception(
@@ -59,6 +119,10 @@ if __name__ == '__main__':
                             dest='model_dir',
                             required=True,
                             help='Directory containing model.')
+    arg_parser.add_argument('--event-dir',
+                            dest='event_dir',
+                            required=True,
+                            help='Directory to save events in.')
     arg_parser.add_argument('--camera-ip',
                             dest='camera_ip',
                             required=True,
