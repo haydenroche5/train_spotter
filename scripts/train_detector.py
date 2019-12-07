@@ -9,6 +9,8 @@ from tensorflow.keras.models import load_model
 from requests.exceptions import ConnectionError
 from datetime import datetime
 import pickle
+import os
+import re
 
 
 def main(args):
@@ -37,7 +39,12 @@ def main(args):
     event_complete_threshold = 5
     event_completion_progress = 0
     event_number = 0
+    if not os.path.exists(args.event_dir):
+        os.makedirs(args.event_dir)
+    else:
+        event_number = max([int(e) for e in os.listdir(args.event_dir)]) + 1
 
+    images_path = None
     while True:
         try:
             response = requests.get(
@@ -59,23 +66,24 @@ def main(args):
 
                 if event_completion_progress > event_complete_threshold:
                     ongoing_event = False
-                    event_file_path = os.path.join(
-                        args.event_dir, 'event_{}'.format(event_number))
+                    event_file_path = os.path.join(args.event_dir,
+                                                   str(event_number),
+                                                   'moments.pickle')
                     with open(event_file_path, 'wb') as event_file:
                         pickle.dump(ongoing_event_moments, event_file)
                     logger.info('##############################')
                     logger.info('End event #{}'.format(event_number))
                     logger.info('##############################')
+                    event_completion_progress = 0
                     moment_counter = 0
                     event_number += 1
                     ongoing_event_moments = []
                 else:
                     # TODO: factor out
                     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    img_path = os.path.join(
-                        args.event_dir, 'images',
-                        '{}_{}.jpg'.format(event_number, moment_counter))
-                    image.save(img_path)
+                    img_path = os.path.join(images_path,
+                                            '{}.jpg'.format(moment_counter))
+                    image_resized.save(img_path)
                     moment_counter += 1
                     event_moment = {
                         'event_number': event_number,
@@ -89,11 +97,13 @@ def main(args):
 
             elif prediction_value > args.threshold:
                 ongoing_event = True
+                images_path = os.path.join(args.event_dir, str(event_number),
+                                           'images')
+                os.makedirs(images_path)
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                img_path = os.path.join(
-                    args.event_dir, 'images',
-                    '{}_{}.jpg'.format(event_number, moment_counter))
-                image.save(img_path)
+                img_path = os.path.join(images_path,
+                                        '{}.jpg'.format(moment_counter))
+                image_resized.save(img_path)
                 moment_counter += 1
                 event_moment = {
                     'event_number': event_number,
