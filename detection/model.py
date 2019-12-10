@@ -118,20 +118,36 @@ class Model:
         self.num_validation_samples = sum(
             [len(files) for _, _, files in os.walk(self.validation_path)])
 
+        initial_max_pool_size = (3, 3)
+        initial_max_pool_stride = 2
+        latter_max_pool_size = (2, 2)
+        latter_max_pool_stride = 2
+        initial_conv_kernel_size = (11, 11)
+        latter_conv_kernel_size = (3, 3)
+
         self.network = Sequential()
         self.network.add(
-            Conv2D(32, (3, 3),
+            Conv2D(32,
+                   initial_conv_kernel_size,
                    input_shape=(img_height, img_width, num_channels),
                    activation='relu'))
-        self.network.add(MaxPooling2D(pool_size=(2, 2)))
+        self.network.add(
+            MaxPooling2D(pool_size=initial_max_pool_size,
+                         strides=initial_max_pool_stride))
         self.network.add(Dropout(0.2))
 
-        self.network.add(Conv2D(32, (3, 3), activation='relu'))
-        self.network.add(MaxPooling2D(pool_size=(2, 2)))
+        self.network.add(Conv2D(32, latter_conv_kernel_size,
+                                activation='relu'))
+        self.network.add(
+            MaxPooling2D(pool_size=latter_max_pool_size,
+                         strides=latter_max_pool_stride))
         self.network.add(Dropout(0.2))
 
-        self.network.add(Conv2D(64, (3, 3), activation='relu'))
-        self.network.add(MaxPooling2D(pool_size=(2, 2)))
+        self.network.add(Conv2D(64, latter_conv_kernel_size,
+                                activation='relu'))
+        self.network.add(
+            MaxPooling2D(pool_size=latter_max_pool_size,
+                         strides=latter_max_pool_stride))
         self.network.add(Dropout(0.2))
 
         self.network.add(Flatten())
