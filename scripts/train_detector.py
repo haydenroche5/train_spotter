@@ -16,36 +16,37 @@ import re
 def get_camera_img(camera_ip, width, height):
     response = requests.get(
         'http://{}/axis-cgi/jpg/image.cgi?resolution={}x{}'.format(
-            args.camera_ip, width, height),
+            camera_ip, width, height),
         timeout=5)
     img = Image.open(BytesIO(response.content))
 
     return img
 
 
-def prepare_img_for_train_detection(img, model):
+def prepare_img_for_train_detection(model, img):
     input_img_height, input_img_width = model.layers[0].input_shape[1:3]
     img_resized = img.resize((input_img_width, input_img_height))
-    image_array = np.array(image_resized)
+    image_array = np.array(img_resized)
     image_array_scaled = image_array / 255.0
     image_array_scaled_expanded = np.expand_dims(image_array_scaled, axis=0)
 
     return image_array_scaled_expanded
 
 
-def prepare_imgs_for_signal_detection(img, model):
+def prepare_imgs_for_signal_detection(model, img):
     signal_xs = [1090, 1218]
     signal_ys = [306, 515]
 
     input_img_height, input_img_width = model.layers[0].input_shape[1:3]
     cropped_imgs = []
     for x, y in zip(signal_xs, signal_ys):
-        cropped_img = img[y:y + input_img_height, x:x + input_img_width]
-        image_array = np.array(cropped_img)
-        image_array_scaled = cropped_img / 255.0
-        image_array_scaled_expanded = np.expand_dims(image_array_scaled,
+        image_array = np.array(img)
+        cropped_img = image_array[y:y + input_img_height, x:x +
+                                  input_img_width]
+        cropped_img_scaled = cropped_img / 255.0
+        cropped_img_scaled_expanded = np.expand_dims(cropped_img_scaled,
                                                      axis=0)
-        cropped_imgs.append(image_array_scaled_expanded)
+        cropped_imgs.append(cropped_img_scaled_expanded)
 
     return cropped_imgs
 
@@ -104,21 +105,32 @@ def main(args):
         event_number = max([int(e) for e in os.listdir(args.event_dir)]) + 1
 
     images_path = None
+    # signal_counter = 0
     while True:
         try:
             img = get_camera_img(args.camera_ip, width, height)
-            train_detection_input_img = prepare_img_for_train_detection(img)
+            train_detection_input_img = prepare_img_for_train_detection(
+                train_detection_model, img)
             signal_detection_input_imgs = prepare_imgs_for_signal_detection(
-                img)
+                signal_detection_model, img)
 
-            for img in signal_detection_input_imgs:
+            for signal_img in signal_detection_input_imgs:
                 signal_prediction_value = np.array(
-                    model.predict_on_batch(img)).flatten()[0]
-                logger.info('Signal prediction value: {}'.format(
-                    signal_prediction_value))
+                    signal_detection_model.predict_on_batch(
+                        signal_img)).flatten()[0]
+                if signal_prediction_value > args.threshold:
+                    logger.info('Signal is on!')
+                    logger.info('Signal prediction value: {}'.format(
+                        signal_prediction_value))
+                    # signal_img_to_save = Image.fromarray(
+                    #     (signal_img[0] * 255).astype(np.uint8))
+                    # signal_img_to_save.save(
+                    #     '/home/pi/hayden_test/{}.jpg'.format(signal_counter))
+                    # signal_counter += 1
 
             train_prediction_value = np.array(
-                model.predict_on_batch(train_detection_input_img)).flatten()[0]
+                train_detection_model.predict_on_batch(
+                    train_detection_input_img)).flatten()[0]
 
             if ongoing_event:
                 if train_prediction_value <= args.threshold:
