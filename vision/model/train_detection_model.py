@@ -1,7 +1,8 @@
-# import the necessary packages
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.keras.layers import Dropout
 from tensorflow.keras.layers import Flatten
 from tensorflow.keras.layers import Dense
 
@@ -9,23 +10,40 @@ from tensorflow.keras.layers import Dense
 class TrainDetectionModel:
     @staticmethod
     def build(width, height):
-        # # initialize the model along with the input shape to be
-        # # "channels last"
-        # model = Sequential()
-        # inputShape = (height, width, depth)
+        initial_max_pool_size = 3
+        initial_max_pool_stride = 2
+        latter_max_pool_size = 2
+        latter_max_pool_stride = 2
+        initial_conv_kernel_size = (11, 11)
+        latter_conv_kernel_size = (3, 3)
 
-        # # if we are using "channels first", update the input shape
-        # # if K.image_data_format() == "channels_first":
-        # #     inputShape = (depth, height, width)
+        model = Sequential()
+        model.add(
+            Conv2D(32,
+                   initial_conv_kernel_size,
+                   input_shape=(img_height, img_width, num_channels),
+                   activation='relu'))
+        model.add(BatchNormalization())
+        model.add(
+            MaxPooling2D(pool_size=initial_max_pool_size,
+                         strides=initial_max_pool_stride))
+        model.add(Dropout(0.2))
 
-        # # define the first (and only) CONV => RELU layer
-        # model.add(Conv2D(32, (3, 3), padding="same", input_shape=inputShape))
-        # model.add(Activation("relu"))
+        model.add(Conv2D(32, latter_conv_kernel_size, activation='relu'))
+        model.add(BatchNormalization())
+        model.add(
+            MaxPooling2D(pool_size=latter_max_pool_size,
+                         strides=latter_max_pool_stride))
+        model.add(Dropout(0.2))
 
-        # # softmax classifier
-        # model.add(Flatten())
-        # model.add(Dense(classes))
-        # model.add(Activation("softmax"))
+        model.add(Conv2D(128, latter_conv_kernel_size, activation='relu'))
+        model.add(BatchNormalization())
+        model.add(
+            MaxPooling2D(pool_size=latter_max_pool_size,
+                         strides=latter_max_pool_stride))
+        model.add(Dropout(0.2))
 
-        # # return the constructed network architecture
-        return model
+        model.add(Flatten())
+        model.add(Dense(64, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(1, activation='sigmoid'))

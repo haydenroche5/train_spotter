@@ -1,1 +1,2 @@
+from .train_detection_model import TrainDetectionModel
 from .signal_detection_model import SignalDetectionModel
