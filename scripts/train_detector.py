@@ -23,10 +23,8 @@ def get_camera_img(camera_ip, width, height):
     return img
 
 
-def prepare_img_for_train_detection(model, img):
-    input_img_height, input_img_width = model.layers[0].input_shape[1:3]
-    img_resized = img.resize((input_img_width, input_img_height))
-    image_array = np.array(img_resized)
+def prepare_img_for_train_detection(img):
+    image_array = np.array(img)
     image_array_scaled = image_array / 255.0
     image_array_scaled_expanded = np.expand_dims(image_array_scaled, axis=0)
 
@@ -51,7 +49,7 @@ def prepare_imgs_for_signal_detection(model, img):
     return cropped_imgs
 
 
-def save_moment(event_dir, event_number, moment_number,
+def save_moment(img, event_dir, event_number, moment_number,
                 train_prediction_value):
     images_path = os.path.join(event_dir, str(event_number), 'images')
     if not os.path.exists(images_path):
@@ -59,7 +57,7 @@ def save_moment(event_dir, event_number, moment_number,
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     img_path = os.path.join(images_path, '{}.jpg'.format(moment_number))
-    image_resized.save(img_path)
+    img.save(img_path)
     moment = {
         'event_number': event_number,
         'timestamp': timestamp,
@@ -105,12 +103,15 @@ def main(args):
         event_number = max([int(e) for e in os.listdir(args.event_dir)]) + 1
 
     images_path = None
-    # signal_counter = 0
+    signal_counter = 0
     while True:
         try:
             img = get_camera_img(args.camera_ip, width, height)
+            input_img_height, input_img_width = train_detection_model.layers[
+                0].input_shape[1:3]
+            img_resized = img.resize((input_img_width, input_img_height))
             train_detection_input_img = prepare_img_for_train_detection(
-                train_detection_model, img)
+                img_resized)
             signal_detection_input_imgs = prepare_imgs_for_signal_detection(
                 signal_detection_model, img)
 
@@ -122,11 +123,11 @@ def main(args):
                     logger.info('Signal is on!')
                     logger.info('Signal prediction value: {}'.format(
                         signal_prediction_value))
-                    # signal_img_to_save = Image.fromarray(
-                    #     (signal_img[0] * 255).astype(np.uint8))
-                    # signal_img_to_save.save(
-                    #     '/home/pi/hayden_test/{}.jpg'.format(signal_counter))
-                    # signal_counter += 1
+                    signal_img_to_save = Image.fromarray(
+                        (signal_img[0] * 255).astype(np.uint8))
+                    signal_img_to_save.save(
+                        '/home/pi/hayden_test/{}.jpg'.format(signal_counter))
+                    signal_counter += 1
 
             train_prediction_value = np.array(
                 train_detection_model.predict_on_batch(
@@ -153,9 +154,8 @@ def main(args):
                     event_number += 1
                     ongoing_event_moments = []
                 else:
-                    # TODO: factor out
-                    moment = save_moment(args.event_dir, event_number,
-                                         moment_counter,
+                    moment = save_moment(img_resized, args.event_dir,
+                                         event_number, moment_counter,
                                          train_prediction_value)
                     ongoing_event_moments.append(moment)
                     logger.info('Train prediction value: {}'.format(
@@ -163,7 +163,7 @@ def main(args):
 
             elif train_prediction_value > args.threshold:
                 ongoing_event = True
-                moment = save_moment(args.event_dir, event_number,
+                moment = save_moment(img_resized, args.event_dir, event_number,
                                      moment_counter, train_prediction_value)
                 ongoing_event_moments.append(moment)
                 logger.info('##############################')
