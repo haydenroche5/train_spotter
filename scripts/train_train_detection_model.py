@@ -22,7 +22,7 @@ def main(args):
     raw_height = 1080
     raw_width = 1920
     num_channels = 3
-    scale_factor = 0.2
+    scale_factor = 0.12
     height = int(raw_height * scale_factor)
     width = int(raw_width * scale_factor)
     learning_rate = 1e-2
@@ -64,7 +64,8 @@ def main(args):
         ModelCheckpoint(filepath=os.path.join(args.output_dir,
                                               'train_detection_model'),
                         monitor='val_loss',
-                        save_best_only=True)
+                        save_best_only=True,
+                        verbose=1)
     ]
 
     H = model.fit_generator(

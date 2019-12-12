@@ -9,7 +9,7 @@ from tensorflow.keras.layers import Dense
 
 class TrainDetectionModel:
     @staticmethod
-    def build(width, height):
+    def build(width, height, num_channels):
         initial_max_pool_size = 3
         initial_max_pool_stride = 2
         latter_max_pool_size = 2
@@ -19,9 +19,9 @@ class TrainDetectionModel:
 
         model = Sequential()
         model.add(
-            Conv2D(32,
+            Conv2D(16,
                    initial_conv_kernel_size,
-                   input_shape=(img_height, img_width, num_channels),
+                   input_shape=(height, width, num_channels),
                    activation='relu'))
         model.add(BatchNormalization())
         model.add(
@@ -36,7 +36,7 @@ class TrainDetectionModel:
                          strides=latter_max_pool_stride))
         model.add(Dropout(0.2))
 
-        model.add(Conv2D(128, latter_conv_kernel_size, activation='relu'))
+        model.add(Conv2D(64, latter_conv_kernel_size, activation='relu'))
         model.add(BatchNormalization())
         model.add(
             MaxPooling2D(pool_size=latter_max_pool_size,
@@ -47,3 +47,5 @@ class TrainDetectionModel:
         model.add(Dense(64, activation='relu'))
         model.add(Dropout(0.5))
         model.add(Dense(1, activation='sigmoid'))
+
+        return model
