@@ -62,7 +62,7 @@ def main(args):
                       patience=args.patience,
                       restore_best_weights=True),
         ModelCheckpoint(filepath=os.path.join(args.output_dir,
-                                              'train_detection_model'),
+                                              'train_detection', 'model'),
                         monitor='val_loss',
                         save_best_only=True,
                         verbose=1)
@@ -76,8 +76,8 @@ def main(args):
         validation_data=validation_generator,
         validation_steps=math.ceil(num_validation_samples / args.batch_size))
 
-    history_file_path = os.path.join(
-        args.output_dir, 'train_detection_model_training_history.pickle')
+    history_file_path = os.path.join(args.output_dir, 'train_detection',
+                                     'training_history.pkl')
     with open(history_file_path, 'wb') as history_file:
         pickle.dump(H.history, history_file)
 

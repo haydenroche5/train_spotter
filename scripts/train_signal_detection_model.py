@@ -22,10 +22,11 @@ def main(args):
     height = 130
     width = 130
     num_channels = 3
-    learning_rate = 1e-3
+    learning_rate = 1e-2
+    decay = learning_rate / args.num_epochs
     momentum = 0.9
 
-    optimizer = SGD(lr=learning_rate, momentum=momentum)
+    optimizer = SGD(lr=learning_rate, decay=decay, momentum=momentum)
     model = SignalDetectionModel.build(width=width,
                                        height=height,
                                        num_channels=num_channels)
@@ -58,7 +59,7 @@ def main(args):
                       patience=args.patience,
                       restore_best_weights=True),
         ModelCheckpoint(filepath=os.path.join(args.output_dir,
-                                              'signal_detection_model'),
+                                              'signal_detection', 'model'),
                         monitor='val_loss',
                         save_best_only=True)
     ]
@@ -71,8 +72,8 @@ def main(args):
         validation_data=validation_generator,
         validation_steps=math.ceil(num_validation_samples / args.batch_size))
 
-    history_file_path = os.path.join(
-        args.output_dir, 'signal_detection_model_training_history.pickle')
+    history_file_path = os.path.join(args.output_dir, 'signal_detection',
+                                     'training_history.pkl')
     with open(history_file_path, 'wb') as history_file:
         pickle.dump(H.history, history_file)
 
