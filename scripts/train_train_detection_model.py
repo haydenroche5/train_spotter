@@ -28,6 +28,7 @@ def main(args):
     learning_rate = 1e-2
     decay = learning_rate / args.num_epochs
     momentum = 0.9
+    validation_split = 0.3
 
     optimizer = SGD(lr=learning_rate, decay=decay, momentum=momentum)
     model = TrainDetectionModel.build(width=width,
@@ -38,7 +39,8 @@ def main(args):
                   metrics=['accuracy'])
     print(model.summary())
 
-    img_gen = ImageDataGenerator(rescale=1. / 255, validation_split=0.15)
+    img_gen = ImageDataGenerator(rescale=1. / 255,
+                                 validation_split=validation_split)
     training_generator = img_gen.flow_from_directory(
         args.data_dir,
         target_size=(height, width),
