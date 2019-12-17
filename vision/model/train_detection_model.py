@@ -19,7 +19,7 @@ class TrainDetectionModel:
 
         model = Sequential()
         model.add(
-            Conv2D(16,
+            Conv2D(32,
                    initial_conv_kernel_size,
                    input_shape=(height, width, num_channels),
                    activation='relu'))
