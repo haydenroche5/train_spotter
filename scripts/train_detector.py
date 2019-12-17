@@ -3,6 +3,7 @@ from io import BytesIO
 import numpy as np
 import requests
 import time
+import json
 import logging
 import argparse
 from tensorflow.keras.models import load_model
@@ -85,11 +86,12 @@ def main(args):
     width = 1920
     height = 1080
     logger.info('THRESHOLD: {}'.format(args.threshold))
-
+    logger.info('Loading models')
     train_detection_model = load_model(
         os.path.join(args.model_dir, 'train_detection', 'model'))
     signal_detection_model = load_model(
         os.path.join(args.model_dir, 'signal_detection', 'model'))
+    logger.info('Loading complete')
 
     ongoing_event = False
     ongoing_event_moments = []
@@ -104,6 +106,7 @@ def main(args):
 
     images_path = None
     signal_counter = 0
+    logger.info('Starting detector')
     while True:
         try:
             img = get_camera_img(args.camera_ip, width, height)
@@ -115,10 +118,12 @@ def main(args):
             signal_detection_input_imgs = prepare_imgs_for_signal_detection(
                 signal_detection_model, img)
 
+            signal_prediction_values = []
             for signal_img in signal_detection_input_imgs:
                 signal_prediction_value = np.array(
                     signal_detection_model.predict_on_batch(
                         signal_img)).flatten()[0]
+                signal_prediction_values.append(signal_prediction_value)
                 if signal_prediction_value > args.threshold:
                     logger.info('Signal is on!')
                     logger.info('Signal prediction value: {}'.format(
@@ -171,6 +176,14 @@ def main(args):
                 logger.info('##############################')
                 logger.info('Train prediction value: {}'.format(
                     train_prediction_value))
+
+            blob = {
+                "train": train_prediction_value.astype(float),
+                "signal": max(signal_prediction_values).astype(float),
+                "secret": "choochoo123"
+            }
+            r = requests.post('https://train-detector.herokuapp.com/update',
+                              json=blob)
             time.sleep(3)
         except ConnectionError:
             raise Exception(
