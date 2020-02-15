@@ -51,7 +51,7 @@ def prepare_imgs_for_signal_detection(model, img):
 
 
 def save_moment(img, event_dir, event_number, moment_number,
-                train_prediction_value):
+                train_prediction_value, signal_prediction_value):
     images_path = os.path.join(event_dir, str(event_number), 'images')
     if not os.path.exists(images_path):
         os.makedirs(images_path)
@@ -64,34 +64,22 @@ def save_moment(img, event_dir, event_number, moment_number,
         'timestamp': timestamp,
         'train_prediction_value': train_prediction_value,
         'img_path': img_path,
+        'signal_prediction_value': signal_prediction_value,
     }
 
     return moment
 
 
 def main(args):
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler('predictions.log', mode='w')
-    fh.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('[%(asctime)s] %(message)s',
-                                  datefmt='%m-%d-%Y %H:%M:%S')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-
     width = 1920
     height = 1080
-    logger.info('THRESHOLD: {}'.format(args.threshold))
-    logger.info('Loading models')
+    print('THRESHOLD: {}.'.format(args.threshold))
+    print('Loading models.')
     train_detection_model = load_model(
         os.path.join(args.model_dir, 'train_detection', 'model'))
     signal_detection_model = load_model(
         os.path.join(args.model_dir, 'signal_detection', 'model'))
-    logger.info('Loading complete')
+    print('Loading complete.')
 
     ongoing_event = False
     ongoing_event_moments = []
@@ -102,11 +90,11 @@ def main(args):
     if not os.path.exists(args.event_dir):
         os.makedirs(args.event_dir)
     else:
-        event_number = max([int(e) for e in os.listdir(args.event_dir)]) + 1
+        if os.listdir(args.event_dir):
+            event_number = max([int(e)
+                                for e in os.listdir(args.event_dir)]) + 1
 
-    images_path = None
-    signal_counter = 0
-    logger.info('Starting detector')
+    print('Starting detector')
     while True:
         try:
             img = get_camera_img(args.camera_ip, width, height)
@@ -125,14 +113,11 @@ def main(args):
                         signal_img)).flatten()[0]
                 signal_prediction_values.append(signal_prediction_value)
                 if signal_prediction_value > args.threshold:
-                    logger.info('Signal is on!')
-                    logger.info('Signal prediction value: {}'.format(
+                    print('Signal is on!')
+                    print('Signal prediction value: {}'.format(
                         signal_prediction_value))
-                    signal_img_to_save = Image.fromarray(
-                        (signal_img[0] * 255).astype(np.uint8))
-                    signal_img_to_save.save(
-                        '/home/pi/hayden_test/{}.jpg'.format(signal_counter))
-                    signal_counter += 1
+            signal_prediction_value = max(signal_prediction_values).astype(
+                float)
 
             train_prediction_value = np.array(
                 train_detection_model.predict_on_batch(
@@ -151,9 +136,9 @@ def main(args):
                                                    'moments.pickle')
                     with open(event_file_path, 'wb') as event_file:
                         pickle.dump(ongoing_event_moments, event_file)
-                    logger.info('##############################')
-                    logger.info('End event #{}'.format(event_number))
-                    logger.info('##############################')
+                    print('##############################')
+                    print('End event #{}'.format(event_number))
+                    print('##############################')
                     event_completion_progress = 0
                     moment_counter = 0
                     event_number += 1
@@ -161,20 +146,24 @@ def main(args):
                 else:
                     moment = save_moment(img_resized, args.event_dir,
                                          event_number, moment_counter,
-                                         train_prediction_value)
+                                         train_prediction_value,
+                                         signal_prediction_value)
                     ongoing_event_moments.append(moment)
-                    logger.info('Train prediction value: {}'.format(
+                    moment_counter += 1
+                    print('Train prediction value: {}'.format(
                         train_prediction_value))
 
             elif train_prediction_value > args.threshold:
                 ongoing_event = True
                 moment = save_moment(img_resized, args.event_dir, event_number,
-                                     moment_counter, train_prediction_value)
+                                     moment_counter, train_prediction_value,
+                                     signal_prediction_value)
                 ongoing_event_moments.append(moment)
-                logger.info('##############################')
-                logger.info('Begin event #{}'.format(event_number))
-                logger.info('##############################')
-                logger.info('Train prediction value: {}'.format(
+                moment_counter += 1
+                print('##############################')
+                print('Begin event #{}'.format(event_number))
+                print('##############################')
+                print('Train prediction value: {}'.format(
                     train_prediction_value))
 
             blob = {
@@ -182,17 +171,17 @@ def main(args):
                 "signal": max(signal_prediction_values).astype(float),
                 "secret": "choochoo123"
             }
-            r = requests.post('https://train-detector.herokuapp.com/update',
+            r = requests.post('https://train-detector.herokuapp.com/update/fourth',
                               json=blob)
             time.sleep(3)
         except ConnectionError:
-            raise Exception(
-                'Timed out trying to get an image from the webcam.')
+            print(
+                'Timed out trying to get an image from the webcam. Will try again.'
+            )
 
 
 if __name__ == '__main__':
-    arg_parser = argparse.ArgumentParser(
-        description='Retrain the train detection model.')
+    arg_parser = argparse.ArgumentParser(description='Run the train detector.')
     arg_parser.add_argument('--model-dir',
                             dest='model_dir',
                             required=True,
