@@ -4,31 +4,24 @@ from os.path import dirname, abspath
 root_dir = dirname(dirname(abspath(__file__)))
 sys.path.append(root_dir)
 from vision.model import TrainDetectionModel
-
-import cv2
 import argparse
 import pickle
-import numpy as np
-import matplotlib.pyplot as plt
 import math
-import tensorflow as tf
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.models import load_model
-
 
 def main(args):
     raw_height = 1080
     raw_width = 1920
     num_channels = 3
-    scale_factor = 0.12
+    scale_factor = 0.20
     height = int(raw_height * scale_factor)
     width = int(raw_width * scale_factor)
-    learning_rate = 1e-2
+    learning_rate = 1e-4
     decay = learning_rate / args.num_epochs
     momentum = 0.9
-    validation_split = 0.3
+    validation_split = 0.15
 
     optimizer = SGD(lr=learning_rate, decay=decay, momentum=momentum)
     model = TrainDetectionModel.build(width=width,
@@ -40,6 +33,7 @@ def main(args):
     print(model.summary())
 
     img_gen = ImageDataGenerator(rescale=1. / 255,
+                                 horizontal_flip=True,
                                  validation_split=validation_split)
     training_generator = img_gen.flow_from_directory(
         args.data_dir,
@@ -62,12 +56,13 @@ def main(args):
     callbacks = [
         EarlyStopping(monitor='val_loss',
                       patience=args.patience,
-                      restore_best_weights=True),
+                      restore_best_weights=True,
+                      verbose=True),
         ModelCheckpoint(filepath=os.path.join(args.output_dir,
                                               'train_detection', 'model'),
                         monitor='val_loss',
                         save_best_only=True,
-                        verbose=1)
+                        verbose=True)
     ]
 
     H = model.fit_generator(
@@ -82,7 +77,6 @@ def main(args):
                                      'training_history.pkl')
     with open(history_file_path, 'wb') as history_file:
         pickle.dump(H.history, history_file)
-
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(
