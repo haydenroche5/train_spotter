@@ -3,16 +3,12 @@ from io import BytesIO
 import numpy as np
 import requests
 import time
-import json
-import logging
 import argparse
 from tensorflow.keras.models import load_model
 from requests.exceptions import ConnectionError
 from datetime import datetime
 import pickle
 import os
-import re
-
 
 def get_camera_img(camera_ip, width, height):
     response = requests.get(
@@ -31,8 +27,21 @@ def prepare_img_for_train_detection(img):
 
     return image_array_scaled_expanded
 
+def prepare_signal_img_chestnut(model, img):
+    model_img_height, model_img_width = model.layers[0].input_shape[1:3]
+    image_array = np.array(img)
+    img_width = image_array.shape[1]
+    signal_x = int((315 / 1920.0) * img_width)
+    signal_y = 0
+    cropped_img = image_array[signal_y:signal_y +
+                              model_img_height, signal_x:signal_x +
+                              model_img_width]
+    cropped_img_scaled = cropped_img / 255.0
+    cropped_img_scaled_expanded = np.expand_dims(cropped_img_scaled, axis=0)
 
-def prepare_imgs_for_signal_detection(model, img):
+    return cropped_img_scaled_expanded
+
+def prepare_signal_imgs_fourth(model, img):
     signal_xs = [1090, 1218]
     signal_ys = [306, 515]
 
@@ -103,21 +112,38 @@ def main(args):
             img_resized = img.resize((input_img_width, input_img_height))
             train_detection_input_img = prepare_img_for_train_detection(
                 img_resized)
-            signal_detection_input_imgs = prepare_imgs_for_signal_detection(
-                signal_detection_model, img)
 
-            signal_prediction_values = []
-            for signal_img in signal_detection_input_imgs:
-                signal_prediction_value = np.array(
-                    signal_detection_model.predict_on_batch(
-                        signal_img)).flatten()[0]
-                signal_prediction_values.append(signal_prediction_value)
-                if signal_prediction_value > args.threshold:
-                    print('Signal is on!')
-                    print('Signal prediction value: {}'.format(
-                        signal_prediction_value))
-            signal_prediction_value = max(signal_prediction_values).astype(
-                float)
+            if args.intersection == 'fourth':
+                signal_detection_input_imgs = prepare_signal_imgs_fourth(signal_detection_model, img)
+                signal_prediction_values = []
+
+                for signal_img in signal_detection_input_imgs:
+                    signal_prediction_value = np.array(
+                        signal_detection_model.predict_on_batch(
+                            signal_img)).flatten()[0]
+                    signal_prediction_values.append(signal_prediction_value)
+
+                    if signal_prediction_value > args.threshold:
+                        print('Signal is on!')
+                        print('Signal prediction value: {}'.format(
+                            signal_prediction_value))
+
+                signal_prediction_value = max(signal_prediction_values).astype(
+                    float)
+            elif args.intersection == 'chestnut':
+                signal_detection_input_img = prepare_signal_img_chestnut(signal_detection_model, img)
+                signal_prediction_value = np.array(signal_detection_model.predict_on_batch(signal_detection_input_img)).flatten()[0]
+                # timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                # img_path = os.path.join('/home/pi/signal_check/', '{}.jpg'.format(timestamp))
+                # img_to_save = Image.fromarray((signal_detection_input_img[0] * 255).astype(np.uint8))
+                # img_to_save.save(img_path)
+            else:
+                raise Exception('Unrecognized intersection: {}.'.format(args.intersection))
+
+            if signal_prediction_value > args.threshold:
+                print('Signal is on!')
+                print('Signal prediction value: {}'.format(
+                    signal_prediction_value))
 
             train_prediction_value = np.array(
                 train_detection_model.predict_on_batch(
@@ -152,7 +178,6 @@ def main(args):
                     moment_counter += 1
                     print('Train prediction value: {}'.format(
                         train_prediction_value))
-
             elif train_prediction_value > args.threshold:
                 ongoing_event = True
                 moment = save_moment(img_resized, args.event_dir, event_number,
@@ -168,11 +193,10 @@ def main(args):
 
             blob = {
                 "train": train_prediction_value.astype(float),
-                "signal": max(signal_prediction_values).astype(float),
+                "signal": signal_prediction_value.astype(float),
                 "secret": "choochoo123"
             }
-            r = requests.post('https://train-detector.herokuapp.com/update/fourth',
-                              json=blob)
+            r = requests.post('https://train-detector.herokuapp.com/update/{}'.format(args.intersection), json=blob)
             time.sleep(3)
         except ConnectionError:
             print(
@@ -182,6 +206,10 @@ def main(args):
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(description='Run the train detector.')
+    arg_parser.add_argument('--intersection',
+                            dest='intersection',
+                            required=True,
+                            help='The intersection that the camera is pointed at. One of \'chestnut\' or \'fourth\'.')
     arg_parser.add_argument('--model-dir',
                             dest='model_dir',
                             required=True,

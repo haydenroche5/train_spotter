@@ -4,27 +4,22 @@ from os.path import dirname, abspath
 root_dir = dirname(dirname(abspath(__file__)))
 sys.path.append(root_dir)
 from vision.model import SignalDetectionModel
-
-import cv2
 import argparse
 import pickle
-import numpy as np
-import matplotlib.pyplot as plt
 import math
-import tensorflow as tf
+import cv2
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.models import load_model
 
-
 def main(args):
-    height = 130
-    width = 130
     num_channels = 3
     learning_rate = 1e-2
     decay = learning_rate / args.num_epochs
     momentum = 0.9
+
+    height, width = cv2.imread([os.path.join(args.data_dir, 'signal', f) for f in os.listdir(os.path.join(args.data_dir, 'signal')) if f.endswith('.jpg')][0]).shape[0:2]
 
     optimizer = SGD(lr=learning_rate, decay=decay, momentum=momentum)
     model = SignalDetectionModel.build(width=width,
@@ -58,8 +53,7 @@ def main(args):
         EarlyStopping(monitor='val_loss',
                       patience=args.patience,
                       restore_best_weights=True),
-        ModelCheckpoint(filepath=os.path.join(args.output_dir,
-                                              'signal_detection', 'model'),
+        ModelCheckpoint(filepath=os.path.join(args.output_dir, 'model'),
                         monitor='val_loss',
                         save_best_only=True)
     ]
@@ -72,8 +66,7 @@ def main(args):
         validation_data=validation_generator,
         validation_steps=math.ceil(num_validation_samples / args.batch_size))
 
-    history_file_path = os.path.join(args.output_dir, 'signal_detection',
-                                     'training_history.pkl')
+    history_file_path = os.path.join(args.output_dir, 'training_history.pkl')
     with open(history_file_path, 'wb') as history_file:
         pickle.dump(H.history, history_file)
 
@@ -91,7 +84,7 @@ if __name__ == '__main__':
                             help='Directory to save training results in.')
     arg_parser.add_argument('--num-epochs',
                             dest='num_epochs',
-                            default=50,
+                            default=5,
                             type=int,
                             help='Number of epochs to train for.')
     arg_parser.add_argument(
