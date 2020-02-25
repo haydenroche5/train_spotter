@@ -1,8 +1,6 @@
 import os
 import sys
 from os.path import dirname, abspath
-root_dir = dirname(dirname(abspath(__file__)))
-sys.path.append(root_dir)
 from vision.model import TrainDetectionModel
 import argparse
 import pickle
@@ -10,6 +8,7 @@ import math
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+
 
 def main(args):
     raw_height = 1080
@@ -58,7 +57,8 @@ def main(args):
                       patience=args.patience,
                       restore_best_weights=True,
                       verbose=True),
-        ModelCheckpoint(os.path.join(args.output_dir, 'model.{epoch:02d}-{val_loss:.4f}.hdf5'),
+        ModelCheckpoint(os.path.join(args.output_dir,
+                                     'model.{epoch:02d}-{val_loss:.4f}.hdf5'),
                         monitor='val_loss',
                         save_best_only=True,
                         verbose=True),
@@ -76,6 +76,7 @@ def main(args):
                                      'training_history.pkl')
     with open(history_file_path, 'wb') as history_file:
         pickle.dump(H.history, history_file)
+
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(
