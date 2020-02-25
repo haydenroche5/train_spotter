@@ -1,7 +1,7 @@
 import os
 import sys
 from os.path import dirname, abspath
-from vision.model import SignalDetectionModel
+from vision.signaldetectionmodel import SignalDetectionModel
 import argparse
 import pickle
 import math

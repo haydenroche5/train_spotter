@@ -1,7 +1,7 @@
 import os
 import sys
 from os.path import dirname, abspath
-from vision.model import TrainDetectionModel
+from vision.traindetectionmodel import TrainDetectionModel
 import argparse
 import pickle
 import math
