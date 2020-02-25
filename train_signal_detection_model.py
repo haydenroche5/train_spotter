@@ -1,8 +1,6 @@
 import os
 import sys
 from os.path import dirname, abspath
-root_dir = dirname(dirname(abspath(__file__)))
-sys.path.append(root_dir)
 from vision.model import SignalDetectionModel
 import argparse
 import pickle
@@ -13,13 +11,18 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.models import load_model
 
+
 def main(args):
     num_channels = 3
     learning_rate = 1e-2
     decay = learning_rate / args.num_epochs
     momentum = 0.9
 
-    height, width = cv2.imread([os.path.join(args.data_dir, 'signal', f) for f in os.listdir(os.path.join(args.data_dir, 'signal')) if f.endswith('.jpg')][0]).shape[0:2]
+    height, width = cv2.imread([
+        os.path.join(args.data_dir, 'signal', f)
+        for f in os.listdir(os.path.join(args.data_dir, 'signal'))
+        if f.endswith('.jpg')
+    ][0]).shape[0:2]
 
     optimizer = SGD(lr=learning_rate, decay=decay, momentum=momentum)
     model = SignalDetectionModel.build(width=width,
