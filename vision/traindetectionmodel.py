@@ -1,16 +1,10 @@
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import BatchNormalization
-from tensorflow.keras.layers import MaxPooling2D
-from tensorflow.keras.layers import Dropout
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPooling2D, Dropout, Flatten, Dense
+
 
 class TrainDetectionModel:
     @staticmethod
     def build(width, height, num_channels):
-        max_pool_size = 2
-        max_pool_stride = 2
         conv_kernel_size = (3, 3)
 
         model = Sequential()
@@ -20,19 +14,17 @@ class TrainDetectionModel:
                    input_shape=(height, width, num_channels),
                    activation='relu'))
         model.add(BatchNormalization())
-        model.add(
-            MaxPooling2D(pool_size=max_pool_size, strides=max_pool_stride))
+        model.add(MaxPooling2D())
         model.add(Dropout(0.3))
 
         model.add(Conv2D(64, conv_kernel_size, activation='relu'))
         model.add(BatchNormalization())
-        model.add(
-            MaxPooling2D(pool_size=max_pool_size, strides=max_pool_stride))
+        model.add(MaxPooling2D())
         model.add(Dropout(0.3))
 
         model.add(Flatten())
         model.add(Dense(64, activation='relu'))
         model.add(Dropout(0.5))
         model.add(Dense(1, activation='sigmoid'))
-`
+
         return model

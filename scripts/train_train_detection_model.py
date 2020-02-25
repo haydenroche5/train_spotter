@@ -58,11 +58,10 @@ def main(args):
                       patience=args.patience,
                       restore_best_weights=True,
                       verbose=True),
-        ModelCheckpoint(filepath=os.path.join(args.output_dir,
-                                              'train_detection', 'model'),
+        ModelCheckpoint(os.path.join(args.output_dir, 'model.{epoch:02d}-{val_loss:.4f}.hdf5'),
                         monitor='val_loss',
                         save_best_only=True,
-                        verbose=True)
+                        verbose=True),
     ]
 
     H = model.fit_generator(
