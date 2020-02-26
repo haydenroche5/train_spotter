@@ -74,7 +74,7 @@ def main(args):
 
     history_file_path = os.path.join(args.output_dir, 'train_detection',
                                      'training_history.pkl')
-    with open(history_file_path, 'wb') as history_file:
+    with open(history_file_path, 'w') as history_file:
         pickle.dump(H.history, history_file)
 
 
