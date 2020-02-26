@@ -17,7 +17,7 @@ def main(args):
     scale_factor = 0.20
     height = int(raw_height * scale_factor)
     width = int(raw_width * scale_factor)
-    learning_rate = 5e-4
+    learning_rate = 4e-4
     decay = learning_rate / args.num_epochs
     momentum = 0.9
     validation_split = 0.15
