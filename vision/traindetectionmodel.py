@@ -9,7 +9,7 @@ class TrainDetectionModel:
 
         model = Sequential()
         model.add(
-            Conv2D(8,
+            Conv2D(4,
                    conv_kernel_size,
                    input_shape=(height, width, num_channels),
                    activation='relu'))
@@ -17,13 +17,13 @@ class TrainDetectionModel:
         model.add(MaxPooling2D())
         model.add(Dropout(0.3))
 
-        model.add(Conv2D(26, conv_kernel_size, activation='relu'))
+        model.add(Conv2D(8, conv_kernel_size, activation='relu'))
         model.add(BatchNormalization())
         model.add(MaxPooling2D())
         model.add(Dropout(0.3))
 
         model.add(Flatten())
-        model.add(Dense(16, activation='relu'))
+        model.add(Dense(8, activation='relu'))
         model.add(Dropout(0.5))
         model.add(Dense(1, activation='sigmoid'))
 
