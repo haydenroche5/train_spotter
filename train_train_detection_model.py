@@ -72,8 +72,7 @@ def main(args):
         validation_data=validation_generator,
         validation_steps=math.ceil(num_validation_samples / args.batch_size))
 
-    history_file_path = os.path.join(args.output_dir, 'train_detection',
-                                     'training_history.pkl')
+    history_file_path = os.path.join(args.output_dir, 'training_history.pkl')
     with open(history_file_path, 'w') as history_file:
         pickle.dump(H.history, history_file)
 

@@ -4,7 +4,7 @@ import numpy as np
 import requests
 import time
 import argparse
-from tensorflow.keras.models import load_model
+from vision.traindetectionmodel import TrainDetectionModel
 from requests.exceptions import ConnectionError
 from datetime import datetime
 import pickle
@@ -83,14 +83,35 @@ def save_moment(img, event_dir, event_number, moment_number,
 
 
 def main(args):
-    width = 1920
-    height = 1080
-    print('THRESHOLD: {}.'.format(args.threshold))
+    train_img_width = 1920
+    train_img_height = 1080
+    train_input_height = 384
+    train_input_width = 216
+    num_channels = 3
+
+    if args.intersection == 'fourth':
+        signal_input_height = 130
+        signal_input_width = 130
+    elif args.intersection == 'chestnut':
+        signal_input_height = 180
+        signal_input_width = 170
+    else:
+        raise Exception('Unrecognized intersection: {}.'.format(
+            args.intersection))
+
+    print('Threshold: {}.'.format(args.threshold))
+
     print('Loading models.')
-    train_detection_model = load_model(
-        os.path.join(args.model_dir, 'train_detection', 'model'))
-    signal_detection_model = load_model(
-        os.path.join(args.model_dir, 'signal_detection', 'model'))
+    train_detection_model = TrainDetectionModel.build(
+        width=train_input_width,
+        height=train_input_height,
+        num_channels=num_channels)
+    signal_detection_model = SignalDetectionModel.build(
+        width=signal_input_width,
+        height=signal_input_height,
+        num_channels=num_channels)
+    train_detection_model.load_weights(args.train_model_weights)
+    signal_detection_model.load_weights(args.signal_model_weights)
     print('Loading complete.')
 
     ongoing_event = False
@@ -99,6 +120,7 @@ def main(args):
     event_complete_threshold = 5
     event_completion_progress = 0
     event_number = 0
+
     if not os.path.exists(args.event_dir):
         os.makedirs(args.event_dir)
     else:
@@ -106,13 +128,13 @@ def main(args):
             event_number = max([int(e)
                                 for e in os.listdir(args.event_dir)]) + 1
 
-    print('Starting detector')
+    print('Starting detector.')
+
     while True:
         try:
-            img = get_camera_img(args.camera_ip, width, height)
-            input_img_height, input_img_width = train_detection_model.layers[
-                0].input_shape[1:3]
-            img_resized = img.resize((input_img_width, input_img_height))
+            img = get_camera_img(args.camera_ip, train_img_width,
+                                 train_img_height)
+            img_resized = img.resize((train_input_width, train_input_height))
             train_detection_input_img = prepare_img_for_train_detection(
                 img_resized)
 
@@ -144,9 +166,6 @@ def main(args):
                 # img_path = os.path.join('/home/pi/signal_check/', '{}.jpg'.format(timestamp))
                 # img_to_save = Image.fromarray((signal_detection_input_img[0] * 255).astype(np.uint8))
                 # img_to_save.save(img_path)
-            else:
-                raise Exception('Unrecognized intersection: {}.'.format(
-                    args.intersection))
 
             if signal_prediction_value > args.threshold:
                 print('Signal is on!')
@@ -168,6 +187,7 @@ def main(args):
                     event_file_path = os.path.join(args.event_dir,
                                                    str(event_number),
                                                    'moments.pickle')
+
                     with open(event_file_path, 'wb') as event_file:
                         pickle.dump(ongoing_event_moments, event_file)
                     print('##############################')
@@ -218,25 +238,35 @@ def main(args):
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(description='Run the train detector.')
     arg_parser.add_argument(
+        '-i',
         '--intersection',
         dest='intersection',
         required=True,
         help=
         'The intersection that the camera is pointed at. One of \'chestnut\' or \'fourth\'.'
     )
-    arg_parser.add_argument('--model-dir',
-                            dest='model_dir',
+    arg_parser.add_argument('-t',
+                            '--train-model-weights',
+                            dest='train_model_weights',
                             required=True,
-                            help='Directory containing models.')
-    arg_parser.add_argument('--event-dir',
+                            help='Path to the train detection model weights.')
+    arg_parser.add_argument('-s',
+                            '--signal-model-weights',
+                            dest='signal_model_weights',
+                            required=True,
+                            help='Path to the signal detection model weights.')
+    arg_parser.add_argument('e',
+                            '--event-dir',
                             dest='event_dir',
                             required=True,
                             help='Directory to save events in.')
-    arg_parser.add_argument('--camera-ip',
+    arg_parser.add_argument('-c',
+                            '--camera-ip',
                             dest='camera_ip',
                             required=True,
                             help='IP address of the webcam.')
     arg_parser.add_argument(
+        '-r',
         '--threshold',
         dest='threshold',
         required=False,
