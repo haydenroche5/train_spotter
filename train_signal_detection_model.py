@@ -55,10 +55,13 @@ def main(args):
     callbacks = [
         EarlyStopping(monitor='val_loss',
                       patience=args.patience,
-                      restore_best_weights=True),
-        ModelCheckpoint(filepath=os.path.join(args.output_dir, 'model'),
+                      restore_best_weights=True,
+                      verbose=True),
+        ModelCheckpoint(filepath=os.path.join(
+            args.output_dir, 'model.{epoch:02d}-{val_loss:.4f}.hdf5'),
                         monitor='val_loss',
-                        save_best_only=True)
+                        save_best_only=True,
+                        verbose=True)
     ]
 
     H = model.fit_generator(
@@ -70,7 +73,7 @@ def main(args):
         validation_steps=math.ceil(num_validation_samples / args.batch_size))
 
     history_file_path = os.path.join(args.output_dir, 'training_history.pkl')
-    with open(history_file_path, 'wb') as history_file:
+    with open(history_file_path, 'w') as history_file:
         pickle.dump(H.history, history_file)
 
 
