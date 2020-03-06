@@ -24,8 +24,14 @@ class TrainDetectionModel:
         model.add(MaxPooling2D())
         model.add(Dropout(0.3))
 
+        model.add(
+            Conv2D(32, conv_kernel_size, activation='relu', padding='same'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D())
+        model.add(Dropout(0.3))
+
         model.add(Flatten())
-        model.add(Dense(16, activation='relu'))
+        model.add(Dense(32, activation='relu'))
         model.add(Dropout(0.5))
         model.add(Dense(1, activation='sigmoid'))
 
