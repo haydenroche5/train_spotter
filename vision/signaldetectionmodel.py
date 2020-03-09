@@ -18,7 +18,7 @@ class SignalDetectionModel:
             Conv2D(32, (5, 5),
                    input_shape=(height, width, num_channels),
                    activation='relu'))
-        model.add(MaxPooling2D(pool_size=(3, 3), strides=2))
+        model.add(MaxPooling2D(pool_size=(3, 3), strides=max_pool_stride))
         model.add(Dropout(0.2))
 
         model.add(Conv2D(32, conv_kernel_size, activation='relu'))
