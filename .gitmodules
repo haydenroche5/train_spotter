@@ -1,0 +1,3 @@
+[submodule "train_detector_dataset"]
+	path = train_detector_dataset
+	url = git@github.com:haydenroche5/train_detector_dataset.git
