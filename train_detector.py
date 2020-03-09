@@ -5,6 +5,7 @@ import requests
 import time
 import argparse
 from vision.traindetectionmodel import TrainDetectionModel
+from vision.signaldetectionmodel import SignalDetectionModel
 from requests.exceptions import ConnectionError
 from datetime import datetime
 import pickle
@@ -221,18 +222,16 @@ def main(args):
                     train_prediction_value))
 
             if not args.test:
-                pass
-                # blob = {
-                #     "train": train_prediction_value.astype(float),
-                #     "signal": signal_prediction_value.astype(float),
-                #     "secret": "redacted"
-                # }
-                # r = requests.post(
-                #     'https://train-detector.herokuapp.com/update/{}'.format(
-                #         args.intersection),
-                #     json=blob)
+                blob = {
+                    "train": train_prediction_value.astype(float),
+                    "signal": signal_prediction_value.astype(float),
+                    "secret": "redacted"
+                }
+                r = requests.post(
+                    'https://train-detector.herokuapp.com/update/{}'.format(
+                        args.intersection),
+                    json=blob)
             else:
-                print('Testing')
                 sys.stdout.flush()
 
             time.sleep(args.sleep_length)
@@ -263,7 +262,7 @@ if __name__ == '__main__':
                             dest='signal_model_weights',
                             required=True,
                             help='Path to the signal detection model weights.')
-    arg_parser.add_argument('e',
+    arg_parser.add_argument('-e',
                             '--event-dir',
                             dest='event_dir',
                             required=True,
@@ -281,7 +280,7 @@ if __name__ == '__main__':
         type=float,
         default=0.5,
         help='Probability threshold for detecting a train.')
-    arg_parser.add_argument('-s',
+    arg_parser.add_argument('-l',
                             '--sleep-length',
                             dest='sleep_length',
                             required=False,
