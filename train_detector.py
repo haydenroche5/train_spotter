@@ -9,6 +9,7 @@ from requests.exceptions import ConnectionError
 from datetime import datetime
 import pickle
 import os
+import sys
 
 
 def get_camera_img(camera_ip, width, height):
@@ -219,16 +220,22 @@ def main(args):
                 print('Train prediction value: {}'.format(
                     train_prediction_value))
 
-            blob = {
-                "train": train_prediction_value.astype(float),
-                "signal": signal_prediction_value.astype(float),
-                "secret": "choochoo123"
-            }
-            r = requests.post(
-                'https://train-detector.herokuapp.com/update/{}'.format(
-                    args.intersection),
-                json=blob)
-            time.sleep(3)
+            if not args.test:
+                pass
+                # blob = {
+                #     "train": train_prediction_value.astype(float),
+                #     "signal": signal_prediction_value.astype(float),
+                #     "secret": "choochoo123"
+                # }
+                # r = requests.post(
+                #     'https://train-detector.herokuapp.com/update/{}'.format(
+                #         args.intersection),
+                #     json=blob)
+            else:
+                print('Testing')
+                sys.stdout.flush()
+
+            time.sleep(args.sleep_length)
         except ConnectionError:
             print(
                 'Timed out trying to get an image from the webcam. Will try again.'
@@ -245,6 +252,7 @@ if __name__ == '__main__':
         help=
         'The intersection that the camera is pointed at. One of \'chestnut\' or \'fourth\'.'
     )
+    arg_parser.add_argument('--test', action='store_true')
     arg_parser.add_argument('-t',
                             '--train-model-weights',
                             dest='train_model_weights',
@@ -273,4 +281,11 @@ if __name__ == '__main__':
         type=float,
         default=0.5,
         help='Probability threshold for detecting a train.')
+    arg_parser.add_argument('-s',
+                            '--sleep-length',
+                            dest='sleep_length',
+                            required=False,
+                            type=float,
+                            default=3.0,
+                            help='Number of seconds to sleep between updates.')
     main(arg_parser.parse_args())
