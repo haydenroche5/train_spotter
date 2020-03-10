@@ -1,5 +1,9 @@
 import cv2
 import argparse
+import numpy as np
+from vision.traindetectionmodel import TrainDetectionModel
+from vision.signaldetectionmodel import SignalDetectionModel
+from PIL import Image
 
 
 def prepare_img_for_train_detection(img):
@@ -46,8 +50,8 @@ def prepare_signal_imgs_fourth(model, img):
 def main(args):
     train_img_width = 1920
     train_img_height = 1080
-    train_input_height = 384
-    train_input_width = 216
+    train_input_width = 384
+    train_input_height = 216
     num_channels = 3
 
     if args.intersection == 'fourth':
@@ -95,10 +99,6 @@ def main(args):
                         signal_detection_model.predict_on_batch(
                             signal_img)).flatten()[0]
                     signal_prediction_values.append(signal_prediction_value)
-
-                    print(
-                        f'Signal prediction value: {signal_prediction_value}.')
-
                 signal_prediction_value = max(signal_prediction_values).astype(
                     float)
             elif args.intersection == 'chestnut':
@@ -107,13 +107,24 @@ def main(args):
                 signal_prediction_value = np.array(
                     signal_detection_model.predict_on_batch(
                         signal_detection_input_img)).flatten()[0]
+            else:
+                raise Exception('Unrecognized intersection: {}.'.format(
+                    args.intersection))
+
+            print(f'Signal prediction value: {signal_prediction_value}.')
+
+            train_prediction_value = np.array(
+                train_detection_model.predict_on_batch(
+                    train_detection_input_img)).flatten()[0]
+
+            # train_img_name = './images/' + str(frame_idx) + '_' + str(
+            #     train_prediction_value).split('.')[1] + '.jpg'
+            # train_img_pil = Image.fromarray(
+            #     (train_detection_input_img[0] * 255).astype(np.uint8))
+            # train_img_pil.save(train_img_name)
+            print(f'Train prediction value: {train_prediction_value}.')
         else:
             print('Skipping...')
-
-        train_prediction_value = np.array(
-            train_detection_model.predict_on_batch(
-                train_detection_input_img)).flatten()[0]
-        print(f'Train prediction value: {train_prediction_value}.')
         print('------------------------------', flush=True)
 
         success, img = vc.read()
@@ -147,9 +158,10 @@ if __name__ == '__main__':
                             required=True,
                             help='Path to the signal detection model weights.')
     arg_parser.add_argument(
-        '-s',
+        '-r',
         '--stride',
         dest='stride',
-        required=True,
+        type=int,
+        default=1,
         help='The number of frames to skip between samples.')
     main(arg_parser.parse_args())
