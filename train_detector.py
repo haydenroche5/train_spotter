@@ -6,7 +6,7 @@ import time
 import argparse
 from vision.traindetectionmodel import TrainDetectionModel
 from vision.signaldetectionmodel import SignalDetectionModel
-from requests.exceptions import ConnectionError
+from requests.exceptions import RequestException
 from datetime import datetime
 import pickle
 import os
@@ -231,14 +231,13 @@ def main(args):
                     'https://train-detector.herokuapp.com/update/{}'.format(
                         args.intersection),
                     json=blob)
-            else:
-                sys.stdout.flush()
 
             time.sleep(args.sleep_length)
-        except ConnectionError:
-            print(
-                'Timed out trying to get an image from the webcam. Will try again.'
-            )
+        except RequestException:
+            print('Failed to get image from the webcam. Will try again.')
+
+        if args.test:
+            sys.stdout.flush()
 
 
 if __name__ == '__main__':
