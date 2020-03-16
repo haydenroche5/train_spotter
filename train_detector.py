@@ -87,8 +87,8 @@ def save_moment(img, event_dir, event_number, moment_number,
 def main(args):
     train_img_width = 1920
     train_img_height = 1080
-    train_input_height = 384
-    train_input_width = 216
+    train_input_width = 384
+    train_input_height = 216
     num_channels = 3
 
     if args.intersection == 'fourth':
