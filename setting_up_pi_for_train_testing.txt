@@ -1,0 +1,2 @@
+- Follow instructions here to connect to VPN to access camera: https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients.md#configure-linux-vpn-clients-using-the-command-line.
+- Follow instructions in rpi_how_to.txt.
