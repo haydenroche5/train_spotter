@@ -12,6 +12,7 @@ import traceback
 
 from core.detector import Detector
 from core.eventtracker import EventTracker
+from core.webpublisher import WebPublisher
 
 
 def run_event_tracker(args, zmq_context, zmq_endpoint, log_file):
@@ -40,11 +41,23 @@ def run_detector(args, zmq_context, zmq_endpoint, log_file):
         sys.stdout.flush()
 
 
+def run_web_publisher(args, zmq_context, zmq_endpoint, log_file):
+    web_publisher = WebPublisher(args.test, args.intersection, zmq_context,
+                                 zmq_endpoint, log_file)
+
+    try:
+        web_publisher.run()
+    except:
+        traceback.print_exc(file=sys.stdout)
+        sys.stdout.flush()
+
+
 def main(args):
     zmq_context = zmq.Context()
     zmq_endpoint = 'detector'
     log_file = os.path.join(args.logging_dir,
                             datetime.now().strftime('%Y%m%d_%H%M%S') + '.log')
+
     detector_thread = threading.Thread(target=run_detector,
                                        args=(args, zmq_context, zmq_endpoint,
                                              log_file),
@@ -53,10 +66,18 @@ def main(args):
                                             args=(args, zmq_context,
                                                   zmq_endpoint, log_file),
                                             daemon=True)
+    web_publisher_thread = threading.Thread(target=run_web_publisher,
+                                            args=(args, zmq_context,
+                                                  zmq_endpoint, log_file),
+                                            daemon=True)
+
     detector_thread.start()
     event_tracker_thread.start()
+    web_publisher_thread.start()
+
     detector_thread.join()
     event_tracker_thread.join()
+    web_publisher_thread.join()
 
 
 if __name__ == '__main__':
