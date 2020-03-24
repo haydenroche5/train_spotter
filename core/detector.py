@@ -105,8 +105,6 @@ class Detector:
                     [train_img])[0]
                 train_img = self.rescale_preprocessor.preprocess([train_img
                                                                   ])[0]
-                print(train_img.shape)
-                print(np.expand_dims(train_img, axis=0).shape)
                 train_prediction_value = np.squeeze(
                     self.train_detection_model.predict_on_batch(
                         np.expand_dims(train_img, axis=0)))
