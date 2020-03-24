@@ -1,17 +1,12 @@
 import os
+# Ensures that TF uses the CPU, not GPU.
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import tensorflow as tf
 
-import numpy as np
-import time
 import argparse
-from requests.exceptions import RequestException
 from datetime import datetime
-import pickle
-import logging
 import threading
 import zmq
-from datetime import datetime
 import sys
 import traceback
 
@@ -65,7 +60,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    arg_parser = argparse.ArgumentParser(description='Run the train detector.')
+    arg_parser = argparse.ArgumentParser(description='Run the train spotter.')
     arg_parser.add_argument(
         '-i',
         '--intersection',

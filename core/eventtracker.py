@@ -98,9 +98,10 @@ class EventTracker:
                     event_number += 1
                     ongoing_event_moments = []
                 else:
-                    moment = save_moment(img, event_number, moment_counter,
-                                         train_prediction_value,
-                                         signal_prediction_value)
+                    moment = self.save_moment(img, event_number,
+                                              moment_counter,
+                                              train_prediction_value,
+                                              signal_prediction_value)
                     ongoing_event_moments.append(moment)
                     moment_counter += 1
                     self.logger.info('Train prediction value: {}'.format(
@@ -108,9 +109,9 @@ class EventTracker:
             elif train_prediction_value > self.threshold:
                 ongoing_event = True
 
-                moment = save_moment(img, event_number, moment_counter,
-                                     train_prediction_value,
-                                     signal_prediction_value)
+                moment = self.save_moment(img, event_number, moment_counter,
+                                          train_prediction_value,
+                                          signal_prediction_value)
                 ongoing_event_moments.append(moment)
                 moment_counter += 1
                 self.logger.info('##############################')
