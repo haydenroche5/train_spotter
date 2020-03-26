@@ -13,7 +13,7 @@ class EventTracker:
                  log_file):
         self.threshold = threshold
         self.socket = zmq_context.socket(zmq.SUB)
-        self.socket.connect(f'inproc://{zmq_endpoint}')
+        self.socket.connect('inproc://{}'.format(zmq_endpoint))
         self.socket.setsockopt_string(zmq.SUBSCRIBE,
                                       "")  # TODO: see if can use single quotes
         self.event_dir = event_dir

@@ -27,7 +27,7 @@ class Detector:
         self.camera_img_width = camera_img_width
         self.camera_img_height = camera_img_height
         self.socket = zmq_context.socket(zmq.PUB)
-        self.socket.bind(f'inproc://{zmq_endpoint}')
+        self.socket.bind('inproc://{}'.format(zmq_endpoint))
         self.sleep_length = sleep_length
 
         self.logger = logging.getLogger(__name__)
@@ -129,10 +129,8 @@ class Detector:
                 resized_img.save(resized_img_bytes, format="JPEG")
                 resized_img_payload = base64.b64encode(
                     resized_img_bytes.getvalue())
-
-                predictions_payload = str.encode(
-                    f'{train_prediction_value:.8f}, {signal_prediction_value:.8f}'
-                )
+                predictions_payload = str.encode('{:.8f}, {:.8f}'.format(
+                    train_prediction_value, signal_prediction_value))
 
                 self.socket.send_multipart(
                     [predictions_payload, resized_img_payload])
