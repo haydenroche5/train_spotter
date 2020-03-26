@@ -28,15 +28,12 @@ class WebPublisher:
 
     def run(self):
         while True:
-            print('buh 0', flush=True)
             predictions, _ = self.socket.recv_multipart()
-            print('buh 1', flush=True)
             train_prediction_value, signal_prediction_value = [
                 float(val) for val in predictions.decode().split(', ')
             ]
 
             if self.test_mode:
-                print('buh 2', flush=True)
                 self.logger.info(
                     'Test mode. Would have published: train: {}, signal: {}.'.
                     format(train_prediction_value, signal_prediction_value))
