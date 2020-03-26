@@ -8,7 +8,7 @@ class WebPublisher:
                  log_file):
         self.test_mode = test_mode
 
-        if intersection not in ['fourth, chestnut']:
+        if intersection not in ['fourth', 'chestnut']:
             raise Exception('Invalid intersection: {}.'.format(intersection))
 
         self.intersection = intersection
@@ -28,23 +28,25 @@ class WebPublisher:
 
     def run(self):
         while True:
+            print('buh 0', flush=True)
             predictions, _ = self.socket.recv_multipart()
+            print('buh 1', flush=True)
             train_prediction_value, signal_prediction_value = [
                 float(val) for val in predictions.decode().split(', ')
             ]
 
             if self.test_mode:
+                print('buh 2', flush=True)
                 self.logger.info(
-                    f'Test mode. Would have published: \{\"train\": {train_prediction_value}, \"signal\": {signal_prediction_value}\}.'
-                )
+                    'Test mode. Would have published: train: {}, signal: {}.'.
+                    format(train_prediction_value, signal_prediction_value))
             else:
-                self.logger.info('not test mode')
-                # blob = {
-                #     "train": train_prediction_value,
-                #     "signal": signal_prediction_value,
-                #     "secret": "choochoo123"
-                # }
-                # r = requests.post(
-                #     'https://train-detector.herokuapp.com/update/{}'.format(
-                #         self.intersection),
-                #     json=blob)
+                blob = {
+                    "train": train_prediction_value,
+                    "signal": signal_prediction_value,
+                    "secret": "choochoo123"
+                }
+                r = requests.post(
+                    'https://train-detector.herokuapp.com/update/{}'.format(
+                        self.intersection),
+                    json=blob)

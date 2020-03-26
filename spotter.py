@@ -16,10 +16,9 @@ from core.webpublisher import WebPublisher
 
 
 def run_event_tracker(args, zmq_context, zmq_endpoint, log_file):
-    event_tracker = EventTracker(args.threshold, zmq_context, zmq_endpoint,
-                                 args.event_dir, log_file)
-
     try:
+        event_tracker = EventTracker(args.threshold, zmq_context, zmq_endpoint,
+                                     args.event_dir, log_file)
         event_tracker.run()
     except:
         traceback.print_exc(file=sys.stdout)
@@ -29,12 +28,13 @@ def run_event_tracker(args, zmq_context, zmq_endpoint, log_file):
 def run_detector(args, zmq_context, zmq_endpoint, log_file):
     camera_img_width = 1920
     camera_img_height = 1080
-    detector = Detector(args.camera_ip, args.intersection,
-                        args.train_model_weights, args.signal_model_weights,
-                        camera_img_width, camera_img_height, log_file,
-                        zmq_context, zmq_endpoint, args.sleep_length)
 
     try:
+        detector = Detector(args.camera_ip, args.intersection,
+                            args.train_model_weights,
+                            args.signal_model_weights, camera_img_width,
+                            camera_img_height, log_file, zmq_context,
+                            zmq_endpoint, args.sleep_length)
         detector.run()
     except:
         traceback.print_exc(file=sys.stdout)
@@ -42,12 +42,15 @@ def run_detector(args, zmq_context, zmq_endpoint, log_file):
 
 
 def run_web_publisher(args, zmq_context, zmq_endpoint, log_file):
-    web_publisher = WebPublisher(args.test, args.intersection, zmq_context,
-                                 zmq_endpoint, log_file)
 
+    print('myeh 0', flush=True)
     try:
+        web_publisher = WebPublisher(args.test, args.intersection, zmq_context,
+                                     zmq_endpoint, log_file)
+        print('myeh 1', flush=True)
         web_publisher.run()
     except:
+        print('myeh 2', flush=True)
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()
 
@@ -57,7 +60,7 @@ def main(args):
     zmq_endpoint = 'detector'
     log_file = os.path.join(args.logging_dir,
                             datetime.now().strftime('%Y%m%d_%H%M%S') + '.log')
-
+    print('here 1', flush=True)
     detector_thread = threading.Thread(target=run_detector,
                                        args=(args, zmq_context, zmq_endpoint,
                                              log_file),
@@ -70,10 +73,12 @@ def main(args):
                                             args=(args, zmq_context,
                                                   zmq_endpoint, log_file),
                                             daemon=True)
+    print('here 2', flush=True)
 
     detector_thread.start()
     event_tracker_thread.start()
     web_publisher_thread.start()
+    print('here 3', flush=True)
 
     detector_thread.join()
     event_tracker_thread.join()
