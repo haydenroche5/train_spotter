@@ -6,9 +6,9 @@ chestnut_ip_addr="10.10.1.191"
 fourth_ip_addr="10.10.1.190"
 
 if [ "$chestnut_ip_addr" == "$ip_addr" ]; then
-    source /home/pi/train_detction/chestnut_config.sh
+    source /home/pi/train_detction/runtime_configs/chestnut_config.sh
 elif [ "$chestnut_ip_addr" == "$ip_addr" ]; then
-    source /home/pi/train_detction/fourth_config.sh
+    source /home/pi/train_detction/runtime_configs/fourth_config.sh
 else
     echo "Unrecognized IP address."
     exit 1
