@@ -1,6 +1,6 @@
 #!/bin/bash
 
-usb_device="dev/sda1"
+usb_device="/dev/sda1"
 usb_directory="/mnt/usb/"
 
 root_directory="/home/pi/train_detection/"
