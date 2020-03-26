@@ -14,7 +14,7 @@ class WebPublisher:
         self.intersection = intersection
 
         self.socket = zmq_context.socket(zmq.SUB)
-        self.socket.connect(f'inproc://{zmq_endpoint}')
+        self.socket.connect('inproc://{}'.format(zmq_endpoint))
         self.socket.setsockopt_string(zmq.SUBSCRIBE, "")
 
         self.logger = logging.getLogger(__name__)
