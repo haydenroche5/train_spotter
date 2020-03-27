@@ -12,9 +12,9 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
 def main(args):
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    session = tf.Session(config=config)
+    # config = tf.compat.v1.ConfigProto()
+    # config.gpu_options.allow_growth = True
+    # session = tf.compat.v1.Session(config=config)
 
     raw_height = 1080
     raw_width = 1920
@@ -57,12 +57,16 @@ def main(args):
     num_training_samples = len(training_generator.labels)
     num_validation_samples = len(validation_generator.labels)
 
+    output_sub_dir = os.path.join(args.output_dir,
+                                  datetime.now().strftime('%Y%m%d_%H%M%S'))
+    os.makedirs(output_sub_dir)
+
     callbacks = [
         EarlyStopping(monitor='val_loss',
                       patience=args.patience,
                       restore_best_weights=True,
                       verbose=True),
-        ModelCheckpoint(os.path.join(args.output_dir,
+        ModelCheckpoint(os.path.join(output_sub_dir,
                                      'model.{epoch:02d}-{val_loss:.4f}.hdf5'),
                         monitor='val_loss',
                         save_best_only=True,
@@ -77,7 +81,7 @@ def main(args):
         validation_data=validation_generator,
         validation_steps=math.ceil(num_validation_samples / args.batch_size))
 
-    history_file_path = os.path.join(args.output_dir, 'training_history.pkl')
+    history_file_path = os.path.join(output_sub_dir, 'training_history.pkl')
     with open(history_file_path, 'wb') as history_file:
         pickle.dump(H.history, history_file)
 
