@@ -5,7 +5,7 @@ import tensorflow as tf
 
 import argparse
 from datetime import datetime
-import threading
+import multiprocessing
 import zmq
 import sys
 import traceback
@@ -56,26 +56,28 @@ def main(args):
     zmq_endpoint = 'detector'
     log_file = os.path.join(args.logging_dir,
                             datetime.now().strftime('%Y%m%d_%H%M%S') + '.log')
-    detector_thread = threading.Thread(target=run_detector,
-                                       args=(args, zmq_context, zmq_endpoint,
-                                             log_file),
-                                       daemon=True)
-    event_tracker_thread = threading.Thread(target=run_event_tracker,
-                                            args=(args, zmq_context,
-                                                  zmq_endpoint, log_file),
-                                            daemon=True)
-    web_publisher_thread = threading.Thread(target=run_web_publisher,
-                                            args=(args, zmq_context,
-                                                  zmq_endpoint, log_file),
-                                            daemon=True)
+    detector_process = multiprocessing.Process(target=run_detector,
+                                               args=(args, zmq_context,
+                                                     zmq_endpoint, log_file),
+                                               daemon=True)
+    event_tracker_process = multiprocessing.Process(target=run_event_tracker,
+                                                    args=(args, zmq_context,
+                                                          zmq_endpoint,
+                                                          log_file),
+                                                    daemon=True)
+    web_publisher_process = multiprocessing.Process(target=run_web_publisher,
+                                                    args=(args, zmq_context,
+                                                          zmq_endpoint,
+                                                          log_file),
+                                                    daemon=True)
 
-    detector_thread.start()
-    event_tracker_thread.start()
-    web_publisher_thread.start()
+    detector_process.start()
+    event_tracker_process.start()
+    web_publisher_process.start()
 
-    detector_thread.join()
-    event_tracker_thread.join()
-    web_publisher_thread.join()
+    detector_process.join()
+    event_tracker_process.join()
+    web_publisher_process.join()
 
 
 if __name__ == '__main__':
