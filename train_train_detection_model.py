@@ -9,7 +9,7 @@ from datetime import datetime
 import tensorflow as tf
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
 
 
 def main(args):
@@ -77,6 +77,7 @@ def main(args):
                         monitor='val_loss',
                         save_best_only=True,
                         verbose=True),
+        CSVLogger(os.path.join(output_sub_dir, 'epochs.csv'))
     ]
 
     H = model.fit_generator(
@@ -86,10 +87,6 @@ def main(args):
         callbacks=callbacks,
         validation_data=validation_generator,
         validation_steps=math.ceil(num_validation_samples / args.batch_size))
-
-    history_file_path = os.path.join(output_sub_dir, 'training_history.pkl')
-    with open(history_file_path, 'wb') as history_file:
-        pickle.dump(H.history, history_file)
 
 
 if __name__ == '__main__':
