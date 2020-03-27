@@ -5,12 +5,17 @@ from vision.traindetectionmodel import TrainDetectionModel
 import argparse
 import pickle
 import math
+import tensorflow as tf
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
 def main(args):
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = tf.Session(config=config)
+
     raw_height = 1080
     raw_width = 1920
     num_channels = 3
