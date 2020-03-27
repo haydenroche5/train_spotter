@@ -1,16 +1,14 @@
 #!/bin/bash
 
-# Read configuration variables based on IP address
-ip_addr=$(hostname -I)
-chestnut_ip_addr="10.10.1.191"
-fourth_ip_addr="10.10.1.190"
+intersection=$(cat /home/pi/intersection | sed 's/ *$//')
 
-if [ "$chestnut_ip_addr" == "$ip_addr" ]; then
-    source /home/pi/train_detction/runtime_configs/chestnut_config.sh
-elif [ "$chestnut_ip_addr" == "$ip_addr" ]; then
-    source /home/pi/train_detction/runtime_configs/fourth_config.sh
+# Read configuration variables based on intersection file
+if [ "chestnut" == "$intersection" ]; then
+    source /home/pi/train_detection/runtime_configs/chestnut_config.sh
+elif [ "fourth" == "$intersection" ]; then
+    source /home/pi/train_detection/runtime_configs/fourth_config.sh
 else
-    echo "Unrecognized IP address."
+    echo "Unrecognized intersection: $intersection."
     exit 1
 fi
 
@@ -18,10 +16,10 @@ fi
 mount $usb_device $usb_directory
 
 # Check if the spotter script is running
-if pgrep spotter > /dev/null 2>&1; then
+if pgrep -f spotter > /dev/null 2>&1; then
     echo "Train spotter is already running."
 else
-    # TODO: remove --test
+    # TODO: remove --test when ready to go live
     su - pi -c "source $venv_file && \
     python $spotter_file \
     -i $intersection \
