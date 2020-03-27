@@ -23,7 +23,7 @@ def main(args):
     scale_factor = 0.20
     height = int(raw_height * scale_factor)
     width = int(raw_width * scale_factor)
-    learning_rate = 5e-4
+    learning_rate = 1e-3
     decay = learning_rate / args.num_epochs
     momentum = 0.9
     validation_split = 0.15
@@ -40,7 +40,6 @@ def main(args):
     img_gen = ImageDataGenerator(rescale=1. / 255,
                                  validation_split=validation_split,
                                  rotation_range=20,
-                                 zoom_range=0.15,
                                  width_shift_range=0.1,
                                  height_shift_range=0.2,
                                  shear_range=0.15,
