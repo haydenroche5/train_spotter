@@ -5,6 +5,7 @@ from vision.traindetectionmodel import TrainDetectionModel
 import argparse
 import pickle
 import math
+from datetime import datetime
 import tensorflow as tf
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.preprocessing.image import ImageDataGenerator

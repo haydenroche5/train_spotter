@@ -3,6 +3,7 @@ import sys
 from os.path import dirname, abspath
 from vision.signaldetectionmodel import SignalDetectionModel
 import argparse
+from datetime import datetime
 import pickle
 import math
 import cv2
