@@ -9,5 +9,5 @@
     "width_shift_range": 0.1,
     "height_shift_range": 0.1,
     "fill_mode": "nearest",
-    "horizontal_flip": true,
+    "horizontal_flip": true
 }
