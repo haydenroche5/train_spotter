@@ -5,7 +5,7 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPooling2D, Dr
 class TrainDetectionModel:
     @staticmethod
     def build(width, height, num_channels):
-        conv_kernel_size = (3, 3)
+        conv_kernel_size = (5, 5)
 
         model = Sequential()
         model.add(
@@ -14,36 +14,30 @@ class TrainDetectionModel:
                    input_shape=(height, width, num_channels),
                    activation='relu',
                    padding='same'))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D())
         model.add(Dropout(0.2))
 
         model.add(
             Conv2D(16, conv_kernel_size, activation='relu', padding='same'))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D())
         model.add(Dropout(0.2))
 
         model.add(
             Conv2D(32, conv_kernel_size, activation='relu', padding='same'))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D())
         model.add(Dropout(0.2))
 
         model.add(
             Conv2D(64, conv_kernel_size, activation='relu', padding='same'))
-        model.add(BatchNormalization())
-        model.add(MaxPooling2D())
-        model.add(Dropout(0.2))
-
-        model.add(
-            Conv2D(128, conv_kernel_size, activation='relu', padding='same'))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D())
         model.add(Dropout(0.2))
 
         model.add(Flatten())
-        model.add(Dense(128, activation='relu'))
+        model.add(Dense(64, activation='relu'))
         model.add(Dropout(0.5))
         model.add(Dense(1, activation='sigmoid'))
 
