@@ -98,6 +98,10 @@ class Detector:
                         self.camera_ip, self.camera_img_width,
                         self.camera_img_height),
                     timeout=5)
+            except RequestException:
+                self.logger.warn(
+                    'Failed to get image from the webcam. Will try again.')
+            else:
                 img = Image.open(BytesIO(camera_response.content))
 
                 train_img = self.train_resize_preprocessor.preprocess([img])[0]
@@ -136,6 +140,3 @@ class Detector:
                     [predictions_payload, resized_img_payload])
 
                 time.sleep(self.sleep_length)
-            except RequestException:
-                self.logger.warn(
-                    'Failed to get image from the webcam. Will try again.')
