@@ -1,5 +1,5 @@
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPooling2D, Dropout, Flatten, Dense
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense
 
 
 class TrainDetectionModel:
@@ -14,25 +14,21 @@ class TrainDetectionModel:
                    input_shape=(height, width, num_channels),
                    activation='relu',
                    padding='same'))
-        # model.add(BatchNormalization())
         model.add(MaxPooling2D())
         model.add(Dropout(0.2))
 
         model.add(
             Conv2D(16, conv_kernel_size, activation='relu', padding='same'))
-        # model.add(BatchNormalization())
         model.add(MaxPooling2D())
         model.add(Dropout(0.2))
 
         model.add(
             Conv2D(32, conv_kernel_size, activation='relu', padding='same'))
-        # model.add(BatchNormalization())
         model.add(MaxPooling2D())
         model.add(Dropout(0.2))
 
         model.add(
             Conv2D(64, conv_kernel_size, activation='relu', padding='same'))
-        # model.add(BatchNormalization())
         model.add(MaxPooling2D())
         model.add(Dropout(0.2))
 
