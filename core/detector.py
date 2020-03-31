@@ -27,7 +27,7 @@ class Detector:
         self.camera_img_width = camera_img_width
         self.camera_img_height = camera_img_height
         self.socket = zmq_context.socket(zmq.PUB)
-        self.socket.bind('inproc://{}'.format(zmq_endpoint))
+        self.socket.bind('ipc://{}'.format(zmq_endpoint))
         self.sleep_length = sleep_length
 
         self.logger = logging.getLogger(__name__)
