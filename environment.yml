@@ -1,0 +1,9 @@
+name: train
+channels:
+  - defaults
+dependencies:
+  - tensorflow-gpu==2.0.0
+  - zeromq
+  - pillow
+prefix: /home/hayden/anaconda3/envs/train
+
