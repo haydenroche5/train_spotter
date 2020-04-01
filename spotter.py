@@ -44,7 +44,7 @@ def run_detector(args, zmq_context, zmq_endpoint, log_file):
 def run_web_publisher(args, zmq_context, zmq_endpoint, log_file):
     try:
         web_publisher = WebPublisher(args.test, args.intersection, zmq_context,
-                                     zmq_endpoint, log_file)
+                                     zmq_endpoint, log_file, args.api_secret)
         web_publisher.run()
     except:
         traceback.print_exc(file=sys.stdout)
@@ -131,4 +131,9 @@ if __name__ == '__main__':
                             type=float,
                             default=3.0,
                             help='Number of seconds to sleep between updates.')
+    arg_parser.add_argument(
+        '--api-secret',
+        dest='api_secret',
+        required=True,
+        help='API secret for updating the server with predictions.')
     main(arg_parser.parse_args())

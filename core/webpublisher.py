@@ -5,7 +5,7 @@ import requests
 
 class WebPublisher:
     def __init__(self, test_mode, intersection, zmq_context, zmq_endpoint,
-                 log_file):
+                 log_file, api_secret):
         self.test_mode = test_mode
 
         if intersection not in ['fourth', 'chestnut']:
@@ -26,6 +26,8 @@ class WebPublisher:
         file_handler.setFormatter(logging_formatter)
         self.logger.addHandler(file_handler)
 
+        self.api_secret = api_secret
+
     def run(self):
         while True:
             predictions, _ = self.socket.recv_multipart()
@@ -41,7 +43,7 @@ class WebPublisher:
                 blob = {
                     "train": train_prediction_value,
                     "signal": signal_prediction_value,
-                    "secret": "redacted"
+                    "secret": self.api_secret
                 }
                 r = requests.post(
                     'https://train-detector.herokuapp.com/update/{}'.format(
