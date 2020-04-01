@@ -6,5 +6,8 @@ This project uses a CNN-based image classification model to predict if a train i
 
 The guts of the code live in the `core` module. `detector.py` is responsible for grabbing images from webcams pointed at each intersection and running the images through the model. Predictions, formatted as a probability of train presence, [0.0, 1.0], are published over IPC using ZeroMQ. `webpublisher.py` subscribes to these updates and sends them along to a web server. That web server is responsible for updating the user-facing app. `eventtracker.py` saves images when a train is present along with some metadata. These three components run in separate processes and are spawned from `spotter.py`.
 
+## iOS App
+If you'd like to receive notfications when a train is blocking the road, download the iOS app [here](https://apps.apple.com/us/app/4th-ave-train-spotter/id1490706781).
+
 ## Blog
 You can read more about this project [here](https://cohub.com/train-spotter).
