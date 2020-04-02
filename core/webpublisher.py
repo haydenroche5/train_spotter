@@ -45,7 +45,13 @@ class WebPublisher:
                     "signal": signal_prediction_value,
                     "secret": self.api_secret
                 }
-                r = requests.post(
-                    'https://train-detector.herokuapp.com/update/{}'.format(
-                        self.intersection),
-                    json=blob)
+
+                try:
+                    r = requests.post(
+                        'https://train-detector.herokuapp.com/update/{}'.
+                        format(self.intersection),
+                        json=blob)
+                except:
+                    self.logger.warn(
+                        'Unable to update web server with latest prediction. Will keep trying.'
+                    )
