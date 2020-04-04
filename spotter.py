@@ -56,6 +56,8 @@ def main(args):
     zmq_endpoint = 'detector'
     log_file = os.path.join(args.logging_dir,
                             datetime.now().strftime('%Y%m%d_%H%M%S') + '.log')
+    multiprocessing.set_start_method('spawn')
+
     detector_process = multiprocessing.Process(target=run_detector,
                                                args=(args, zmq_context,
                                                      zmq_endpoint, log_file),
