@@ -4,8 +4,8 @@ import requests
 
 
 class WebPublisher:
-    def __init__(self, test_mode, intersection, zmq_context, zmq_endpoint,
-                 log_file, api_secret):
+    def __init__(self, test_mode, intersection, zmq_endpoint, log_file,
+                 api_secret):
         self.test_mode = test_mode
 
         if intersection not in ['fourth', 'chestnut']:
@@ -13,7 +13,8 @@ class WebPublisher:
 
         self.intersection = intersection
 
-        self.socket = zmq_context.socket(zmq.SUB)
+        self.zmq_context = zmq.Context()
+        self.socket = self.zmq_context.socket(zmq.SUB)
         self.socket.connect('ipc://{}'.format(zmq_endpoint))
         self.socket.setsockopt_string(zmq.SUBSCRIBE, "")
 

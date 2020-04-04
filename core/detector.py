@@ -21,12 +21,12 @@ from vision.signaldetectionmodel import SignalDetectionModel
 class Detector:
     def __init__(self, camera_ip, intersection, train_detection_model_weights,
                  signal_detection_model_weights, camera_img_width,
-                 camera_img_height, log_file, zmq_context, zmq_endpoint,
-                 sleep_length):
+                 camera_img_height, log_file, zmq_endpoint, sleep_length):
         self.camera_ip = camera_ip
         self.camera_img_width = camera_img_width
         self.camera_img_height = camera_img_height
-        self.socket = zmq_context.socket(zmq.PUB)
+        self.zmq_context = zmq.Context()
+        self.socket = self.zmq_context.socket(zmq.PUB)
         self.socket.bind('ipc://{}'.format(zmq_endpoint))
         self.sleep_length = sleep_length
 

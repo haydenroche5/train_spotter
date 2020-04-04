@@ -15,9 +15,9 @@ from core.eventtracker import EventTracker
 from core.webpublisher import WebPublisher
 
 
-def run_event_tracker(args, zmq_context, zmq_endpoint, log_file):
+def run_event_tracker(args, zmq_endpoint, log_file):
     try:
-        event_tracker = EventTracker(args.threshold, zmq_context, zmq_endpoint,
+        event_tracker = EventTracker(args.threshold, zmq_endpoint,
                                      args.event_dir, log_file)
         event_tracker.run()
     except:
@@ -25,7 +25,7 @@ def run_event_tracker(args, zmq_context, zmq_endpoint, log_file):
         sys.stdout.flush()
 
 
-def run_detector(args, zmq_context, zmq_endpoint, log_file):
+def run_detector(args, zmq_endpoint, log_file):
     camera_img_width = 1920
     camera_img_height = 1080
 
@@ -33,17 +33,17 @@ def run_detector(args, zmq_context, zmq_endpoint, log_file):
         detector = Detector(args.camera_ip, args.intersection,
                             args.train_model_weights,
                             args.signal_model_weights, camera_img_width,
-                            camera_img_height, log_file, zmq_context,
-                            zmq_endpoint, args.sleep_length)
+                            camera_img_height, log_file, zmq_endpoint,
+                            args.sleep_length)
         detector.run()
     except:
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()
 
 
-def run_web_publisher(args, zmq_context, zmq_endpoint, log_file):
+def run_web_publisher(args, zmq_endpoint, log_file):
     try:
-        web_publisher = WebPublisher(args.test, args.intersection, zmq_context,
+        web_publisher = WebPublisher(args.test, args.intersection,
                                      zmq_endpoint, log_file, args.api_secret)
         web_publisher.run()
     except:
@@ -52,24 +52,21 @@ def run_web_publisher(args, zmq_context, zmq_endpoint, log_file):
 
 
 def main(args):
-    zmq_context = zmq.Context()
     zmq_endpoint = 'detector'
     log_file = os.path.join(args.logging_dir,
                             datetime.now().strftime('%Y%m%d_%H%M%S') + '.log')
     multiprocessing.set_start_method('spawn')
 
     detector_process = multiprocessing.Process(target=run_detector,
-                                               args=(args, zmq_context,
-                                                     zmq_endpoint, log_file),
+                                               args=(args, zmq_endpoint,
+                                                     log_file),
                                                daemon=True)
     event_tracker_process = multiprocessing.Process(target=run_event_tracker,
-                                                    args=(args, zmq_context,
-                                                          zmq_endpoint,
+                                                    args=(args, zmq_endpoint,
                                                           log_file),
                                                     daemon=True)
     web_publisher_process = multiprocessing.Process(target=run_web_publisher,
-                                                    args=(args, zmq_context,
-                                                          zmq_endpoint,
+                                                    args=(args, zmq_endpoint,
                                                           log_file),
                                                     daemon=True)
 

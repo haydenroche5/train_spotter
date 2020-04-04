@@ -9,10 +9,10 @@ import base64
 
 
 class EventTracker:
-    def __init__(self, threshold, zmq_context, zmq_endpoint, event_dir,
-                 log_file):
+    def __init__(self, threshold, zmq_endpoint, event_dir, log_file):
         self.threshold = threshold
-        self.socket = zmq_context.socket(zmq.SUB)
+        self.zmq_context = zmq.Context()
+        self.socket = self.zmq_context.socket(zmq.SUB)
         self.socket.connect('ipc://{}'.format(zmq_endpoint))
         self.socket.setsockopt_string(zmq.SUBSCRIBE,
                                       "")  # TODO: see if can use single quotes
