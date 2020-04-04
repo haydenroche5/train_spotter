@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usb_device="/dev/sda1"
-usb_directory="/mnt/usb/"
+usb_directory="/mnt/usb2/"
 
 root_directory="/home/pi/train_detection/"
 venv_file="${root_directory}/venv/bin/activate"

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 intersection=$(cat /home/pi/intersection | sed 's/ *$//')
+api_secret=$(cat /home/pi/api_secret | sed 's/ *$//')
 
 # Read configuration variables based on intersection file
 if [ "chestnut" == "$intersection" ]; then
@@ -30,7 +31,9 @@ else
     -c $camera_ip \
     -r $threshold \
     -l $sleep_length \
-    -g $logging_directory > $stdout_stderr_file 2>&1 &"
+    -g $logging_directory \
+    --api-secret $api_secret \
+    > $stdout_stderr_file 2>&1 &"
 fi
 
 exit 0
