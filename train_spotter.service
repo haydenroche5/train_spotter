@@ -1,0 +1,11 @@
+[Unit]
+Description=Train Spotter
+After=network.target
+
+[Service]
+ExecStart=/home/pi/train_spotter/start_train_detector.sh
+User=root
+
+[Install]
+WantedBy=multi-user.target
+
