@@ -3,10 +3,10 @@
 usb_device="/dev/sda1"
 usb_directory="/mnt/usb2/"
 
-root_directory="/home/pi/train_detection/"
+root_directory="/home/pi/train_spotter/"
 venv_file="${root_directory}/venv/bin/activate"
 spotter_file="${root_directory}/spotter.py"
-train_model_weights="${root_directory}/saved_models/chestnut/train/model.27-0.0807.hdf5"
+train_model_weights="${root_directory}/saved_models/chestnut/train/20200329_112403/model.29-0.0747.hdf5"
 signal_model_weights="${root_directory}/saved_models/chestnut/signal/model.04-0.0010.hdf5"
 events_directory="${usb_directory}/events/"
 logging_directory="${root_directory}/logging/"
