@@ -8,9 +8,9 @@ api_secret=$(cat /home/pi/api_secret | sed 's/ *$//')
 
 # Read configuration variables based on intersection file
 if [ "chestnut" == "$intersection" ]; then
-    source /home/pi/train_detection/runtime_configs/chestnut_config.sh >> $stdout_stderr_file 2>&1
+    source /home/pi/train_spotter/runtime_configs/chestnut_config.sh >> $stdout_stderr_file 2>&1
 elif [ "fourth" == "$intersection" ]; then
-    source /home/pi/train_detection/runtime_configs/fourth_config.sh >> $stdout_stderr_file 2>&1
+    source /home/pi/train_spotter/runtime_configs/fourth_config.sh >> $stdout_stderr_file 2>&1
 else
     echo "Unrecognized intersection: $intersection." >> $stdout_stderr_file
     exit 1
