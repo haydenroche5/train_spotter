@@ -4,6 +4,7 @@ import multiprocessing
 import zmq
 import sys
 import traceback
+import os
 
 from core.detector import Detector
 from core.eventtracker import EventTracker
