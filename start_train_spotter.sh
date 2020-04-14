@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit if any command below fails.
+set -e
+
 # Clear the startup.log file
 startup_log=/home/pi/train_spotter/startup.log
 > $startup_log
@@ -18,17 +21,17 @@ else
 fi
 
 # Mount the USB drive
-mount $usb_device $usb_directory >> $startup_log 2>&1
+if ! grep -qs "$usb_directory " /proc/mounts; then
+    mount $usb_device $usb_directory >> $startup_log 2>&1
+fi
 
 # Check if the spotter script is running
 if pgrep -f "train_spotter.py" > /dev/null 2>&1; then
     echo "Train spotter is already running." >> $startup_log
 else
-    # TODO: remove --test when ready to go live
-    su - pi -c "source $venv_file && \
-    python $spotter_file \
+    su -c "source $venv_file && \
+    nohup python $spotter_file \
     -i $intersection \
-    --test \
     -t $train_model_weights \
     -s $signal_model_weights \
     -e $events_directory \
@@ -37,7 +40,7 @@ else
     -l $sleep_length \
     -g $logging_directory \
     --api-secret $api_secret \
-    > $stdout_stderr_file 2>&1 &"
+    > $stdout_stderr_file 2>&1 &" - pi
 fi
 
 exit 0
