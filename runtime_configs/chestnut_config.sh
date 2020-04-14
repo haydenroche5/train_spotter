@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usb_device="/dev/sda1"
-usb_directory="/mnt/usb2/"
+usb_directory="/mnt/usb2"
 
 root_directory="/home/pi/train_spotter/"
 venv_file="${root_directory}/venv/bin/activate"
@@ -12,7 +12,6 @@ events_directory="${usb_directory}/events/"
 logging_directory="${root_directory}/logging/"
 stdout_stderr_file="${root_directory}/detector.log"
 
-intersection="chestnut"
 camera_ip="10.10.1.182"
 threshold="0.95"
 sleep_length="3"
