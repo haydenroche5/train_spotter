@@ -48,7 +48,7 @@ def run_web_publisher(args, zmq_endpoint, log_file):
 
 
 def main(args):
-    zmq_endpoint = 'detector'
+    zmq_endpoint = '/tmp/train_spotter'
     log_file = os.path.join(args.logging_dir,
                             datetime.now().strftime('%Y%m%d_%H%M%S') + '.log')
     multiprocessing.set_start_method('spawn')
