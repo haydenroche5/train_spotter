@@ -2,7 +2,7 @@
 
 # Clear the startup.log file
 startup_log=/home/pi/train_spotter/startup.log
-> startup_log
+> $startup_log
 
 intersection=$(cat /home/pi/intersection | sed 's/ *$//')
 api_secret=$(cat /home/pi/api_secret | sed 's/ *$//')
