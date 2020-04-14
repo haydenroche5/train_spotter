@@ -115,6 +115,8 @@ class Detector:
 
                 signal_img = self.img_to_array_preprocessor.preprocess([img
                                                                         ])[0]
+                signal_img = self.rescale_preprocessor.preprocess([signal_img
+                                                                  ])[0]
                 signal_prediction_values = []
 
                 for crop_pp in self.crop_preprocessors:
