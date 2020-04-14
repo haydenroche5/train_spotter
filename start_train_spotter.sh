@@ -21,7 +21,7 @@ fi
 mount $usb_device $usb_directory >> $startup_log 2>&1
 
 # Check if the spotter script is running
-if pgrep -f spotter > /dev/null 2>&1; then
+if pgrep -f "train_spotter.py" > /dev/null 2>&1; then
     echo "Train spotter is already running." >> $startup_log
 else
     # TODO: remove --test when ready to go live
