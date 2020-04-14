@@ -1,8 +1,3 @@
-import os
-# Ensures that TF uses the CPU, not GPU.
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-import tensorflow as tf
-
 import argparse
 from datetime import datetime
 import multiprocessing
