@@ -12,7 +12,7 @@ def main(args):
 
     if args.n >= num_models:
         print(
-            f'Nothing to do. N, {args.n}, >=    the number of model files, {num_models}.'
+            f'Nothing to do. N, {args.n}, >= the number of model files, {num_models}.'
         )
         return
 
