@@ -1,38 +1,26 @@
 import os
-import sys
-from os.path import dirname, abspath
 from vision.traindetectionmodel import TrainDetectionModel
 import argparse
-import math
-import json
 from datetime import datetime
-import tensorflow as tf
+import json
+import math
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
 
 
 def main(args):
-    # config = tf.compat.v1.ConfigProto()
-    # config.gpu_options.allow_growth = True
-    # session = tf.compat.v1.Session(config=config)
-
     with open(args.config, 'r') as f:
         config = json.load(f)
 
-    raw_height = 1080
-    raw_width = 1920
+    height = 216
+    width = 384
     num_channels = 3
-    scale_factor = 0.20
-    height = int(raw_height * scale_factor)
-    width = int(raw_width * scale_factor)
-    learning_rate = config['learning_rate']
-    decay = learning_rate / config['epochs']
-    momentum = config['momentum']
-    validation_split = config['validation_split']
 
     if config['optimizer'] == 'SGD':
-        optimizer = SGD(lr=learning_rate, decay=decay, momentum=momentum)
+        optimizer = SGD(lr=config['learning_rate'],
+                        decay=config['learning_rate'] / config['epochs'],
+                        momentum=config['momentum'])
     else:
         raise Exception('Unsupported optimizer: {}.'.format(
             config['optimizer']))
@@ -47,7 +35,7 @@ def main(args):
 
     img_gen = ImageDataGenerator(
         rescale=1. / 255,
-        validation_split=validation_split,
+        validation_split=config['validation_split'],
         width_shift_range=config['width_shift_range'],
         height_shift_range=config['height_shift_range'],
         fill_mode=config['fill_mode'],
