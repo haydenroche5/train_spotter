@@ -1,5 +1,6 @@
 import os
 from vision.signaldetectionmodel import SignalDetectionModel
+from vision.traindetectionmodel import TrainDetectionModel
 import argparse
 from datetime import datetime
 import json
@@ -53,13 +54,12 @@ def main(args):
     else:
         horizontal_flip = False
 
-    img_gen = ImageDataGenerator(
-        rescale=1. / 255,
-        validation_split=config['validation_split'],
-        width_shift_range=config['width_shift_range'],
-        height_shift_range=config['height_shift_range'],
-        fill_mode='nearest',
-        horizontal_flip=config['horizontal_flip'])
+    img_gen = ImageDataGenerator(rescale=1. / 255,
+                                 validation_split=config['validation_split'],
+                                 width_shift_range=width_shift_range,
+                                 height_shift_range=height_shift_range,
+                                 fill_mode='nearest',
+                                 horizontal_flip=horizontal_flip)
     training_generator = img_gen.flow_from_directory(
         args.data_dir,
         target_size=(config['height'], config['width']),

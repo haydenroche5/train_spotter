@@ -1,4 +1,7 @@
 {
+    "height": 216,
+    "width": 384,
+    "num_channels": 3,
     "learning_rate": 4e-3,
     "optimizer": "SGD",
     "momentum": 0.9,
