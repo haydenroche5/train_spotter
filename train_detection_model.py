@@ -14,12 +14,16 @@ def main(args):
     with open(args.config, 'r') as f:
         config = json.load(f)
 
-    height, width = cv2.imread([
-        os.path.join(args.data_dir, 'signal', f)
-        for f in os.listdir(os.path.join(args.data_dir, 'signal'))
-        if f.endswith('.jpg')
-    ][0]).shape[0:2]
-    num_channels = 3
+    if args.model_type == 'signal':
+        model = SignalDetectionModel.build(width=config['width'],
+                                           height=config['height'],
+                                           num_channels=config['num_channels'])
+    elif args.model_type == 'train':
+        model = TrainDetectionModel.build(width=config['width'],
+                                          height=config['height'],
+                                          num_channels=config['num_channels'])
+    else:
+        raise Exception('Unsupported model type: {}.'.format(args.model_type))
 
     if config['optimizer'] == 'SGD':
         optimizer = SGD(lr=config['learning_rate'],
@@ -29,26 +33,43 @@ def main(args):
         raise Exception('Unsupported optimizer: {}.'.format(
             config['optimizer']))
 
-    model = SignalDetectionModel.build(width=width,
-                                       height=height,
-                                       num_channels=num_channels)
     model.compile(loss='binary_crossentropy',
                   optimizer=optimizer,
                   metrics=['accuracy'])
     print(model.summary())
 
-    img_gen = ImageDataGenerator(rescale=1. / 255,
-                                 validation_split=config['validation_split'])
+    if 'width_shift_range' in config:
+        width_shift_range = config['width_shift_range']
+    else:
+        width_shift_range = 0.0
+
+    if 'height_shift_range' in config:
+        height_shift_range = config['height_shift_range']
+    else:
+        height_shift_range = 0.0
+
+    if 'horizontal_flip' in config:
+        horizontal_flip = config['horizontal_flip']
+    else:
+        horizontal_flip = False
+
+    img_gen = ImageDataGenerator(
+        rescale=1. / 255,
+        validation_split=config['validation_split'],
+        width_shift_range=config['width_shift_range'],
+        height_shift_range=config['height_shift_range'],
+        fill_mode='nearest',
+        horizontal_flip=config['horizontal_flip'])
     training_generator = img_gen.flow_from_directory(
         args.data_dir,
-        target_size=(height, width),
+        target_size=(config['height'], config['width']),
         batch_size=config['batch_size'],
         class_mode='binary',
         subset='training',
         shuffle=True)
     validation_generator = img_gen.flow_from_directory(
         args.data_dir,
-        target_size=(height, width),
+        target_size=(config['height'], config['width']),
         batch_size=config['batch_size'],
         class_mode='binary',
         subset='validation',
@@ -86,7 +107,12 @@ def main(args):
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(
-        description='Train the signal detection model.')
+        description='Train a detection model.')
+    arg_parser.add_argument(
+        '--model-type',
+        dest='model_type',
+        required=True,
+        help='Model type to train. One of [train, signal].')
     arg_parser.add_argument('--data-dir',
                             dest='data_dir',
                             required=True,

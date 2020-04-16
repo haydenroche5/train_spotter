@@ -13,10 +13,6 @@ def main(args):
     with open(args.config, 'r') as f:
         config = json.load(f)
 
-    height = 216
-    width = 384
-    num_channels = 3
-
     if config['optimizer'] == 'SGD':
         optimizer = SGD(lr=config['learning_rate'],
                         decay=config['learning_rate'] / config['epochs'],
@@ -25,9 +21,9 @@ def main(args):
         raise Exception('Unsupported optimizer: {}.'.format(
             config['optimizer']))
 
-    model = TrainDetectionModel.build(width=width,
-                                      height=height,
-                                      num_channels=num_channels)
+    model = TrainDetectionModel.build(width=config['width'],
+                                      height=config['height'],
+                                      num_channels=config['num_channels'])
     model.compile(loss='binary_crossentropy',
                   optimizer=optimizer,
                   metrics=['accuracy'])
@@ -42,14 +38,14 @@ def main(args):
         horizontal_flip=config['horizontal_flip'])
     training_generator = img_gen.flow_from_directory(
         args.data_dir,
-        target_size=(height, width),
+        target_size=(config['height'], config['width']),
         batch_size=config['batch_size'],
         class_mode='binary',
         subset='training',
         shuffle=True)
     validation_generator = img_gen.flow_from_directory(
         args.data_dir,
-        target_size=(height, width),
+        target_size=(config['height'], config['width']),
         batch_size=config['batch_size'],
         class_mode='binary',
         subset='validation',

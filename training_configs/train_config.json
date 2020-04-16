@@ -8,6 +8,5 @@
     "validation_split": 0.15,
     "width_shift_range": 0.1,
     "height_shift_range": 0.1,
-    "fill_mode": "nearest",
     "horizontal_flip": true
 }
