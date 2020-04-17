@@ -20,34 +20,37 @@ class GradCamHeatMapper:
 
     def get_heat_map(self, img):
         with tf.GradientTape() as tape:
+            inputs = tf.cast(img, tf.float32)
             conv_outputs, predictions = self.grad_model(np.array([img]))
             score = predictions[:, 0]
 
-        output = conv_outputs[0]
         grads = tape.gradient(score, conv_outputs)[0]
 
-        gate_f = tf.cast(output > 0, 'float32')
-        gate_r = tf.cast(grads > 0, 'float32')
-        guided_grads = tf.cast(output > 0, 'float32') * tf.cast(
-            grads > 0, 'float32') * grads
+        cast_conv_outputs = tf.cast(conv_outputs > 0, 'float32')
+        cast_grads = tf.cast(grads > 0, 'float32')
+        guided_grads = cast_conv_outputs * cast_grads * grads
+
+        conv_outputs = conv_outputs[0]
+        guided_grads = guided_grads[0]
 
         weights = tf.reduce_mean(guided_grads, axis=(0, 1))
+        cam = tf.reduce_sum(tf.multiply(weights, conv_outputs), axis=-1)
 
-        cam = np.ones(output.shape[0:2], dtype=np.float32)
+        (w, h) = (img.shape[1], img.shape[0])
+        heatmap = cv2.resize(cam.numpy(), (w, h))
 
-        for i, w in enumerate(weights):
-            cam += w * output[:, :, i]
+        epsilon = 1e-8
+        numer = heatmap - np.min(heatmap)
+        denom = (heatmap.max() - heatmap.min()) + epsilon
+        heatmap = numer / denom
+        heatmap = (heatmap * 255).astype('uint8')
 
-        height, width = img.shape[0:2]
-        cam = cv2.resize(cam.numpy(), (width, height))
-        cam = np.maximum(cam, 0)
-        heatmap = (cam - cam.min()) / (cam.max() - cam.min())
+        img = (img * 255).astype('uint8')
 
-        cam = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
+        heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        output = cv2.addWeighted(img, 0.5, heatmap, 0.5, 0)
 
-        output_image_bgr = cv2.addWeighted(
-            cv2.cvtColor(img.astype('uint8'), cv2.COLOR_RGB2BGR), 0.5, cam, 1,
-            0)
-        output_image_rgb = output_image_bgr[:, :, ::-1]
+        heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+        output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
 
-        return output_image_rgb
+        return (heatmap, output)
