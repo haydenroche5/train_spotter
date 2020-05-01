@@ -31,7 +31,7 @@ class WebPublisher:
 
     def run(self):
         while True:
-            predictions, _ = self.socket.recv_multipart()
+            predictions = self.socket.recv_multipart()[0]
             train_prediction_value, signal_prediction_value = [
                 float(val) for val in predictions.decode().split(', ')
             ]

@@ -30,7 +30,7 @@ class EventTracker:
 
         self.logger.info('Threshold: {}.'.format(self.threshold))
 
-    def save_moment(self, img, event_number, moment_number,
+    def save_moment(self, train_img, signal_imgs, event_number, moment_number,
                     train_prediction_value, signal_prediction_value):
         images_path = os.path.join(self.event_dir, str(event_number), 'images')
 
@@ -38,13 +38,24 @@ class EventTracker:
             os.makedirs(images_path)
 
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        img_path = os.path.join(images_path, '{}.jpg'.format(moment_number))
-        img.save(img_path)
+
+        train_img_path = os.path.join(images_path,
+                                      'train_{}.jpg'.format(moment_number))
+        train_img.save(train_img_path)
+
+        signal_img_paths = []
+        for i, signal_img in enumerate(signal_imgs):
+            signal_img_path = os.path.join(
+                images_path, 'signal_{}_{}.jpg'.format(moment_number, i))
+            signal_img.save(signal_img_path)
+            signal_img_paths.append(signal_img_path)
+
         moment = {
             'event_number': event_number,
             'timestamp': timestamp,
             'train_prediction_value': train_prediction_value,
-            'img_path': img_path,
+            'train_img_path': train_img_path,
+            'signal_img_paths': signal_img_paths,
             'signal_prediction_value': signal_prediction_value,
         }
 
@@ -66,11 +77,19 @@ class EventTracker:
                     [int(e) for e in os.listdir(self.event_dir)]) + 1
 
         while True:
-            predictions, img_b64 = self.socket.recv_multipart()
+            payloads = self.socket.recv_multipart()
+            predictions = payloads[0]
+            train_img_b64 = payloads[1]
+            signal_imgs_b64 = payloads[2:]
+
             train_prediction_value, signal_prediction_value = [
                 float(val) for val in predictions.decode().split(', ')
             ]
-            img = Image.open(BytesIO(base64.b64decode(img_b64)))
+            train_img = Image.open(BytesIO(base64.b64decode(train_img_b64)))
+            signal_imgs = [
+                Image.open(BytesIO(base64.b64decode(signal_img_b64)))
+                for signal_img_b64 in signal_imgs_b64
+            ]
 
             if signal_prediction_value > self.threshold:
                 self.logger.info('Signal is on. Prediction value: {}.'.format(
@@ -98,8 +117,8 @@ class EventTracker:
                     event_number += 1
                     ongoing_event_moments = []
                 else:
-                    moment = self.save_moment(img, event_number,
-                                              moment_counter,
+                    moment = self.save_moment(train_img, signal_imgs,
+                                              event_number, moment_counter,
                                               train_prediction_value,
                                               signal_prediction_value)
                     ongoing_event_moments.append(moment)
@@ -109,7 +128,8 @@ class EventTracker:
             elif train_prediction_value > self.threshold:
                 ongoing_event = True
 
-                moment = self.save_moment(img, event_number, moment_counter,
+                moment = self.save_moment(train_img, signal_imgs, event_number,
+                                          moment_counter,
                                           train_prediction_value,
                                           signal_prediction_value)
                 ongoing_event_moments.append(moment)
