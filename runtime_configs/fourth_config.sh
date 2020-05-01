@@ -13,5 +13,5 @@ logging_directory="${root_directory}/logging/"
 stdout_stderr_file="${root_directory}/detector.log"
 
 camera_ip="10.10.1.181"
-threshold="0.95"
+threshold="0.90"
 sleep_length="3"
