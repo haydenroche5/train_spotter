@@ -2,11 +2,11 @@
     "height": 130,
     "width": 130,
     "num_channels": 3,
-    "learning_rate": 1e-2,
+    "learning_rate": 4e-3,
     "optimizer": "SGD",
     "momentum": 0.9,
-    "epochs": 10,
-    "batch_size": 8,
-    "patience": 3,
+    "epochs": 30,
+    "batch_size": 16,
+    "patience": 8,
     "validation_split": 0.15
 }
