@@ -54,12 +54,18 @@ def main(args):
     else:
         horizontal_flip = False
 
+    if 'rotation_range' in config:
+        rotation_range = config['rotation_range']
+    else:
+        rotation_range = 0
+
     img_gen = ImageDataGenerator(rescale=1. / 255,
                                  validation_split=config['validation_split'],
                                  width_shift_range=width_shift_range,
                                  height_shift_range=height_shift_range,
                                  fill_mode='nearest',
-                                 horizontal_flip=horizontal_flip)
+                                 horizontal_flip=horizontal_flip,
+                                 rotation_range=rotation_range)
     training_generator = img_gen.flow_from_directory(
         args.data_dir,
         target_size=(config['height'], config['width']),
