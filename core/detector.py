@@ -77,6 +77,7 @@ class Detector:
                 'Unrecognized intersection: {}.'.format(intersection))
 
         self.signal_detection_model = SignalDetectionModel.build(
+            intersection=intersection,
             width=signal_input_width,
             height=signal_input_height,
             num_channels=num_channels)
