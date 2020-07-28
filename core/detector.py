@@ -20,16 +20,25 @@ from vision.signaldetectionmodel import SignalDetectionModel
 
 
 class Detector:
-    def __init__(self, camera_ip, intersection, train_detection_model_weights,
-                 signal_detection_model_weights, camera_img_width,
-                 camera_img_height, log_file, zmq_endpoint, sleep_length):
+    def __init__(self,
+                 camera_ip,
+                 intersection,
+                 train_detection_model_weights,
+                 signal_detection_model_weights,
+                 camera_img_width,
+                 camera_img_height,
+                 log_file,
+                 sleep_length,
+                 zmq_endpoint=''):
         self.camera_ip = camera_ip
         self.camera_img_width = camera_img_width
         self.camera_img_height = camera_img_height
-        self.zmq_context = zmq.Context()
-        self.socket = self.zmq_context.socket(zmq.PUB)
-        self.socket.bind('ipc://{}'.format(zmq_endpoint))
         self.sleep_length = sleep_length
+
+        if zmq_endpoint != '':
+            self.zmq_context = zmq.Context()
+            self.socket = self.zmq_context.socket(zmq.PUB)
+            self.socket.bind('ipc://{}'.format(zmq_endpoint))
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
@@ -88,6 +97,37 @@ class Detector:
             signal_detection_model_weights)
         self.logger.info('Loading complete.')
 
+    def get_train_prediction(self, img):
+        train_img_resized = self.train_resize_preprocessor.preprocess([img])[0]
+        train_img_array = self.img_to_array_preprocessor.preprocess(
+            [train_img_resized])[0]
+        train_img_scaled = self.rescale_preprocessor.preprocess(
+            [train_img_array])[0]
+        train_prediction_value = np.squeeze(
+            self.train_detection_model.predict_on_batch(
+                np.expand_dims(train_img_scaled, axis=0)))
+
+        return train_prediction_value
+
+    def get_signal_prediction(self, img):
+        signal_prediction_values = []
+        signal_img_crops = []
+        for crop_pp in self.crop_preprocessors:
+            signal_img_crop = crop_pp.preprocess([img])[0]
+            signal_img_crops.append(signal_img_crop)
+            signal_img_array = self.img_to_array_preprocessor.preprocess(
+                [signal_img_crop])[0]
+            signal_img_scaled = self.rescale_preprocessor.preprocess(
+                [signal_img_array])[0]
+            signal_prediction_values.append(
+                np.squeeze(
+                    self.signal_detection_model.predict_on_batch(
+                        np.expand_dims(signal_img_scaled, axis=0))))
+
+        signal_prediction_value = max(signal_prediction_values).astype(float)
+
+        return signal_prediction_value
+
     def run(self):
         self.logger.info('Starting detector.')
 
@@ -105,32 +145,8 @@ class Detector:
             else:
                 img = Image.open(BytesIO(camera_response.content))
 
-                train_img_resized = self.train_resize_preprocessor.preprocess(
-                    [img])[0]
-                train_img_array = self.img_to_array_preprocessor.preprocess(
-                    [train_img_resized])[0]
-                train_img_scaled = self.rescale_preprocessor.preprocess(
-                    [train_img_array])[0]
-                train_prediction_value = np.squeeze(
-                    self.train_detection_model.predict_on_batch(
-                        np.expand_dims(train_img_scaled, axis=0)))
-
-                signal_prediction_values = []
-                signal_img_crops = []
-                for crop_pp in self.crop_preprocessors:
-                    signal_img_crop = crop_pp.preprocess([img])[0]
-                    signal_img_crops.append(signal_img_crop)
-                    signal_img_array = self.img_to_array_preprocessor.preprocess(
-                        [signal_img_crop])[0]
-                    signal_img_scaled = self.rescale_preprocessor.preprocess(
-                        [signal_img_array])[0]
-                    signal_prediction_values.append(
-                        np.squeeze(
-                            self.signal_detection_model.predict_on_batch(
-                                np.expand_dims(signal_img_scaled, axis=0))))
-
-                signal_prediction_value = max(signal_prediction_values).astype(
-                    float)
+                train_prediction_value = self.get_train_prediction(img)
+                signal_prediction_value = self.get_signal_prediction(img)
 
                 train_img_resized_bytes = BytesIO()
                 train_img_resized.save(train_img_resized_bytes, format="JPEG")
@@ -153,3 +169,12 @@ class Detector:
                 ])
 
                 time.sleep(self.sleep_length)
+
+
+class SimpleDetector(Detector):
+    def __init__(self, intersection, train_detection_model_weights,
+                 signal_detection_model_weights, camera_img_width,
+                 camera_img_height, log_file):
+        super().__init__('', intersection, train_detection_model_weights,
+                         signal_detection_model_weights, camera_img_width,
+                         camera_img_height, log_file, '', 0)
