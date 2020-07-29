@@ -15,6 +15,7 @@ from rocheml.preprocessing.imagetoarraypreprocessor import ImageToArrayPreproces
 from rocheml.preprocessing.rescalepreprocessor import RescalePreprocessor
 from rocheml.preprocessing.resizepreprocessor import ResizePreprocessor
 from rocheml.preprocessing.croppreprocessor import CropPreprocessor
+from rocheml.preprocessing.contrastpreprocessor import ContrastPreprocessor
 from vision.traindetectionmodel import TrainDetectionModel
 from vision.signaldetectionmodel import SignalDetectionModel
 
@@ -31,6 +32,7 @@ class Detector:
                  sleep_length,
                  zmq_endpoint=''):
         self.camera_ip = camera_ip
+        self.intersection = intersection
         self.camera_img_width = camera_img_width
         self.camera_img_height = camera_img_height
         self.sleep_length = sleep_length
@@ -81,6 +83,8 @@ class Detector:
                 CropPreprocessor(signal_box_origin, signal_input_width,
                                  signal_input_height)
             ]
+            self.contrast_preprocessor = ContrastPreprocessor(alpha=3.0,
+                                                              beta=0.0)
         else:
             raise Exception(
                 'Unrecognized intersection: {}.'.format(intersection))
@@ -109,14 +113,25 @@ class Detector:
 
         return train_prediction_value
 
-    def get_signal_prediction(self, img):
-        signal_prediction_values = []
+    def get_signal_crops(self, img):
         signal_img_crops = []
         for crop_pp in self.crop_preprocessors:
             signal_img_crop = crop_pp.preprocess([img])[0]
             signal_img_crops.append(signal_img_crop)
+
+        return signal_img_crops
+
+    def get_signal_prediction(self, img):
+        signal_prediction_values = []
+        signal_img_crops = self.get_signal_crops(img)
+        for signal_img_crop in signal_img_crops:
             signal_img_array = self.img_to_array_preprocessor.preprocess(
                 [signal_img_crop])[0]
+
+            if self.intersection == 'chestnut':
+                signal_img_array = self.contrast_preprocessor.preprocess(
+                    [signal_img_array])[0]
+
             signal_img_scaled = self.rescale_preprocessor.preprocess(
                 [signal_img_array])[0]
             signal_prediction_values.append(
