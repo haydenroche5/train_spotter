@@ -9,7 +9,12 @@ import base64
 
 
 class EventTracker:
-    def __init__(self, threshold, zmq_endpoint, event_dir, log_file):
+    def __init__(self,
+                 threshold,
+                 zmq_endpoint,
+                 event_dir,
+                 log_file,
+                 save_signal_moments=False):
         self.threshold = threshold
         self.zmq_context = zmq.Context()
         self.socket = self.zmq_context.socket(zmq.SUB)
@@ -27,6 +32,8 @@ class EventTracker:
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(logging_formatter)
         self.logger.addHandler(file_handler)
+
+        self.save_signal_moments = save_signal_moments
 
         self.logger.info('Threshold: {}.'.format(self.threshold))
 
@@ -94,6 +101,11 @@ class EventTracker:
             if signal_prediction_value > self.threshold:
                 self.logger.info('Signal is on. Prediction value: {}.'.format(
                     signal_prediction_value))
+
+                if self.save_signal_moments:
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    signal_img_path = 'signal_{}.jpg'.format(timestamp)
+                    signal_imgs[0].save(signal_img_path)
 
             if ongoing_event:
                 if train_prediction_value <= self.threshold:

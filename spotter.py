@@ -14,7 +14,8 @@ from core.webpublisher import WebPublisher
 def run_event_tracker(args, zmq_endpoint, log_file):
     try:
         event_tracker = EventTracker(args.threshold, zmq_endpoint,
-                                     args.event_dir, log_file)
+                                     args.event_dir, log_file,
+                                     args.save_signal)
         event_tracker.run()
     except:
         traceback.print_exc(file=sys.stdout)
@@ -26,11 +27,16 @@ def run_detector(args, zmq_endpoint, log_file):
     camera_img_height = 1080
 
     try:
-        detector = Detector(args.camera_ip, args.intersection,
-                            args.train_model_weights,
-                            args.signal_model_weights, camera_img_width,
-                            camera_img_height, log_file, zmq_endpoint,
-                            args.sleep_length)
+        detector = Detector(
+            camera_ip=args.camera_ip,
+            intersection=args.intersection,
+            train_detection_model_weights=args.train_model_weights,
+            signal_detection_model_weights=args.signal_model_weights,
+            camera_img_width=camera_img_width,
+            camera_img_height=camera_img_height,
+            log_file=log_file,
+            sleep_length=args.sleep_length,
+            zmq_endpoint=zmq_endpoint)
         detector.run()
     except:
         traceback.print_exc(file=sys.stdout)
@@ -131,4 +137,12 @@ if __name__ == '__main__':
         dest='api_secret',
         required=True,
         help='API secret for updating the server with predictions.')
+    arg_parser.add_argument(
+        '--save-signal',
+        dest='save_signal',
+        action='store_true',
+        default=False,
+        help=
+        'Save an image any time the signal prediction value breaches the threshold.'
+    )
     main(arg_parser.parse_args())

@@ -97,10 +97,8 @@ class Detector:
             signal_detection_model_weights)
         self.logger.info('Loading complete.')
 
-    def get_train_prediction(self, img):
-        train_img_resized = self.train_resize_preprocessor.preprocess([img])[0]
-        train_img_array = self.img_to_array_preprocessor.preprocess(
-            [train_img_resized])[0]
+    def get_train_prediction(self, crop):
+        train_img_array = self.img_to_array_preprocessor.preprocess([crop])[0]
         train_img_scaled = self.rescale_preprocessor.preprocess(
             [train_img_array])[0]
         train_prediction_value = np.squeeze(
@@ -109,14 +107,22 @@ class Detector:
 
         return train_prediction_value
 
-    def get_signal_prediction(self, img):
-        signal_prediction_values = []
+    def get_train_crops(self, img):
+        return self.train_resize_preprocessor.preprocess([img])[0]
+
+    def get_signal_crops(self, img):
         signal_img_crops = []
         for crop_pp in self.crop_preprocessors:
             signal_img_crop = crop_pp.preprocess([img])[0]
             signal_img_crops.append(signal_img_crop)
+
+        return signal_img_crops
+
+    def get_signal_prediction(self, crops):
+        signal_prediction_values = []
+        for crop in crops:
             signal_img_array = self.img_to_array_preprocessor.preprocess(
-                [signal_img_crop])[0]
+                [crop])[0]
             signal_img_scaled = self.rescale_preprocessor.preprocess(
                 [signal_img_array])[0]
             signal_prediction_values.append(
@@ -145,27 +151,31 @@ class Detector:
             else:
                 img = Image.open(BytesIO(camera_response.content))
 
-                train_prediction_value = self.get_train_prediction(img)
-                signal_prediction_value = self.get_signal_prediction(img)
+                train_crop = self.get_train_crops(img)
+                signal_crops = self.get_signal_crops(img)
 
-                train_img_resized_bytes = BytesIO()
-                train_img_resized.save(train_img_resized_bytes, format="JPEG")
-                train_img_resized_payload = base64.b64encode(
-                    train_img_resized_bytes.getvalue())
+                train_prediction_value = self.get_train_prediction(train_crop)
+                signal_prediction_value = self.get_signal_prediction(
+                    signal_crops)
 
-                signal_img_crop_payloads = []
-                for signal_img_crop in signal_img_crops:
-                    signal_img_crop_bytes = BytesIO()
-                    signal_img_crop.save(signal_img_crop_bytes, format="JPEG")
-                    signal_img_crop_payloads.append(
-                        base64.b64encode(signal_img_crop_bytes.getvalue()))
+                train_crop_bytes = BytesIO()
+                train_crop.save(train_crop_bytes, format="JPEG")
+                train_crop_payload = base64.b64encode(
+                    train_crop_bytes.getvalue())
+
+                signal_crop_payloads = []
+                for signal_crop in signal_crops:
+                    signal_crop_bytes = BytesIO()
+                    signal_crop.save(signal_crop_bytes, format="JPEG")
+                    signal_crop_payloads.append(
+                        base64.b64encode(signal_crop_bytes.getvalue()))
 
                 predictions_payload = str.encode('{:.8f}, {:.8f}'.format(
                     train_prediction_value, signal_prediction_value))
 
                 self.socket.send_multipart([
-                    predictions_payload, train_img_resized_payload,
-                    *signal_img_crop_payloads
+                    predictions_payload, train_crop_payload,
+                    *signal_crop_payloads
                 ])
 
                 time.sleep(self.sleep_length)
