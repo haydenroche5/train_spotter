@@ -15,6 +15,7 @@ from rocheml.preprocessing.imagetoarraypreprocessor import ImageToArrayPreproces
 from rocheml.preprocessing.rescalepreprocessor import RescalePreprocessor
 from rocheml.preprocessing.resizepreprocessor import ResizePreprocessor
 from rocheml.preprocessing.croppreprocessor import CropPreprocessor
+from rocheml.preprocessing.contrastpreprocessor import ContrastPreprocessor
 from vision.traindetectionmodel import TrainDetectionModel
 from vision.signaldetectionmodel import SignalDetectionModel
 
@@ -29,8 +30,11 @@ class Detector:
                  camera_img_height,
                  log_file,
                  sleep_length,
-                 zmq_endpoint=''):
+                 zmq_endpoint='',
+                 contrast_pp_alpha=1.0,
+                 contrast_pp_threshold=0):
         self.camera_ip = camera_ip
+        self.intersection = intersection
         self.camera_img_width = camera_img_width
         self.camera_img_height = camera_img_height
         self.sleep_length = sleep_length
@@ -81,6 +85,11 @@ class Detector:
                 CropPreprocessor(signal_box_origin, signal_input_width,
                                  signal_input_height)
             ]
+            self.contrast_preprocessor = ContrastPreprocessor(
+                alpha=contrast_pp_alpha,
+                beta=0.0,
+                adaptive=True,
+                threshold=contrast_pp_threshold)
         else:
             raise Exception(
                 'Unrecognized intersection: {}.'.format(intersection))
@@ -97,16 +106,6 @@ class Detector:
             signal_detection_model_weights)
         self.logger.info('Loading complete.')
 
-    def get_train_prediction(self, crop):
-        train_img_array = self.img_to_array_preprocessor.preprocess([crop])[0]
-        train_img_scaled = self.rescale_preprocessor.preprocess(
-            [train_img_array])[0]
-        train_prediction_value = np.squeeze(
-            self.train_detection_model.predict_on_batch(
-                np.expand_dims(train_img_scaled, axis=0)))
-
-        return train_prediction_value
-
     def get_train_crops(self, img):
         return self.train_resize_preprocessor.preprocess([img])[0]
 
@@ -118,11 +117,26 @@ class Detector:
 
         return signal_img_crops
 
+    def get_train_prediction(self, crop):
+        train_img_array = self.img_to_array_preprocessor.preprocess([crop])[0]
+        train_img_scaled = self.rescale_preprocessor.preprocess(
+            [train_img_array])[0]
+        train_prediction_value = np.squeeze(
+            self.train_detection_model.predict_on_batch(
+                np.expand_dims(train_img_scaled, axis=0)))
+
+        return train_prediction_value
+
     def get_signal_prediction(self, crops):
         signal_prediction_values = []
         for crop in crops:
             signal_img_array = self.img_to_array_preprocessor.preprocess(
                 [crop])[0]
+
+            if self.intersection == 'chestnut':
+                signal_img_array = self.contrast_preprocessor.preprocess(
+                    [signal_img_array])[0]
+
             signal_img_scaled = self.rescale_preprocessor.preprocess(
                 [signal_img_array])[0]
             signal_prediction_values.append(

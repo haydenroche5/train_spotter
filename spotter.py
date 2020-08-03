@@ -36,7 +36,9 @@ def run_detector(args, zmq_endpoint, log_file):
             camera_img_height=camera_img_height,
             log_file=log_file,
             sleep_length=args.sleep_length,
-            zmq_endpoint=zmq_endpoint)
+            zmq_endpoint=zmq_endpoint,
+            contrast_pp_alpha=args.contrast_alpha,
+            contrast_pp_threshold=args.contrast_threshold)
         detector.run()
     except:
         traceback.print_exc(file=sys.stdout)
@@ -144,5 +146,19 @@ if __name__ == '__main__':
         default=False,
         help=
         'Save an image any time the signal prediction value breaches the threshold.'
+    )
+    arg_parser.add_argument(
+        '--contrast-alpha',
+        dest='contrast_alpha',
+        type=float,
+        default=1.0,
+        help='Boosting factor to use with contrast preprocessing.')
+    arg_parser.add_argument(
+        '--contrast-threshold',
+        dest='contrast_threshold',
+        type=int,
+        default=0,
+        help=
+        'Average pixel value the signal image must exceed to use contrast boosting.'
     )
     main(arg_parser.parse_args())

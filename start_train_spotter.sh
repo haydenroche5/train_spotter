@@ -40,6 +40,8 @@ else
     -l $sleep_length \
     -g $logging_directory \
     --api-secret $api_secret \
+    --contrast-alpha $contrast_alpha \
+    --contrast-threshold $contrast_threshold \
     > $stdout_stderr_file 2>&1 &" - pi
 fi
 
