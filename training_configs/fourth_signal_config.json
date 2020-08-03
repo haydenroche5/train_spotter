@@ -1,4 +1,5 @@
 {
+    "intersection": "fourth",
     "height": 130,
     "width": 130,
     "num_channels": 3,

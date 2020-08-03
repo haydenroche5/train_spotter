@@ -16,7 +16,8 @@ def main(args):
         config = json.load(f)
 
     if args.model_type == 'signal':
-        model = SignalDetectionModel.build(width=config['width'],
+        model = SignalDetectionModel.build(intersection=config['intersection'],
+                                           width=config['width'],
                                            height=config['height'],
                                            num_channels=config['num_channels'])
     elif args.model_type == 'train':
