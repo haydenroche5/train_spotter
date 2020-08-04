@@ -71,7 +71,7 @@ class Detector:
         if intersection == 'fourth':
             signal_input_height = 130
             signal_input_width = 130
-            signal_box_origin = (1343, 609)
+            signal_box_origin = (1318, 579)
             self.crop_preprocessors = [
                 CropPreprocessor(signal_box_origin, signal_input_width,
                                  signal_input_height),
