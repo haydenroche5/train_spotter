@@ -46,13 +46,17 @@ class WebPublisher:
                     "signal": signal_prediction_value,
                     "secret": self.api_secret
                 }
-
-                try:
-                    r = requests.post(
-                        'https://train.cohub.com/api/update/{}'.
-                        format(self.intersection),
-                        json=blob)
-                except:
-                    self.logger.warn(
-                        'Unable to update web server with latest prediction. Will keep trying.'
-                    )
+                base_urls = [
+                    "https://train-detector.herokuapp.com",
+                    "https://train.cohub.com/api",
+                ]
+                for base_url in base_urls:
+                    try:
+                        r = requests.post(
+                            '{}/update/{}'.
+                            format(base_url, self.intersection),
+                            json=blob)
+                    except:
+                        self.logger.warn(
+                            'Unable to update web server {} with latest prediction. Will keep trying.'.format(base_url)
+                        )
