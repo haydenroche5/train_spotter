@@ -49,7 +49,7 @@ class WebPublisher:
 
                 try:
                     r = requests.post(
-                        'https://train-detector.herokuapp.com/update/{}'.
+                        'https://train.cohub.com/api/update/{}'.
                         format(self.intersection),
                         json=blob)
                 except:
