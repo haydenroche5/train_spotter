@@ -31,9 +31,18 @@ class WebPublisher:
 
     def run(self):
         while True:
-            predictions = self.socket.recv_multipart()[0]
+            try:
+                predictions = self.socket.recv_multipart()
+            except zmq.ZMQError as e:
+                self.logger.warn("ZMQError: {}".format(str(e)))
+                continue
+
+            if len(predictions) == 0:
+                self.logger.warn("Empty predictions list received on ZMQ socket from detector.")
+                continue
+
             train_prediction_value, signal_prediction_value = [
-                float(val) for val in predictions.decode().split(', ')
+                float(val) for val in predictions[0].decode().split(', ')
             ]
 
             if self.test_mode:
