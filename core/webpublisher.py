@@ -65,7 +65,12 @@ class WebPublisher:
                             '{}/update/{}'.
                             format(base_url, self.intersection),
                             json=blob)
-                    except:
-                        self.logger.warn(
-                            'Unable to update web server {} with latest prediction. Will keep trying.'.format(base_url)
-                        )
+                        r.raise_for_status()
+                    except requests.exceptions.HTTPError as err:
+                        self.logger.warn("HTTP error ({}): {}".format(base_url, err))
+                    except requests.exceptions.ConnectionError as err:
+                        self.logger.warn("Connection error ({}): {}".format(base_url, err))
+                    except requests.exceptions.Timeout as err:
+                        self.logger.warn("Timeout error ({}): {}".format(base_url, err))
+                    except requests.exceptions.RequestException as err:
+                        self.logger.warn("Request error ({}): {}".format(base_url, err))
