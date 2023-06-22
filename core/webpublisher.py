@@ -56,7 +56,6 @@ class WebPublisher:
                     "secret": self.api_secret
                 }
                 base_urls = [
-                    "https://train-detector.herokuapp.com",
                     "https://train.cohub.com/api",
                 ]
                 for base_url in base_urls:
