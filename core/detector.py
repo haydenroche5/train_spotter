@@ -163,7 +163,12 @@ class Detector:
                 self.logger.warn(
                     'Failed to get image from the webcam. Will try again.')
             else:
-                img = Image.open(BytesIO(camera_response.content))
+                try:
+                    img = Image.open(BytesIO(camera_response.content))
+                except PIL.UnidentifiedImageError as e:
+                    self.logger.warn(e)
+                    self.logger.warn('Failed to open image. Will try again.')
+                    continue
 
                 train_crop = self.get_train_crops(img)
                 signal_crops = self.get_signal_crops(img)
