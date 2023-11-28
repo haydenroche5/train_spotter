@@ -6,10 +6,52 @@ from datetime import datetime
 import json
 import math
 import cv2
-from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.optimizers.legacy import SGD
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger, Callback
+import numpy as np
+from sklearn.metrics import confusion_matrix
+import pandas as pd
 
+# from tensorflow.keras.applications import MobileNetV3Small
+# from tensorflow.keras.layers import Input, Dense, GlobalAveragePooling2D
+# from tensorflow.keras.models import Model
+# from tensorflow.keras.optimizers import Adam
+
+class ConfusionMatrixCallback(Callback):
+    def __init__(self, validation_generator):
+        super(ConfusionMatrixCallback, self).__init__()
+        self.validation_generator = validation_generator
+
+    def on_epoch_end(self, epoch, logs=None):
+        # Generate predictions on the validation set
+        self.validation_generator.reset()
+        predictions = self.model.predict_generator(self.validation_generator)
+
+        # Convert predictions and true labels to class indices
+        true_labels = self.validation_generator.classes
+
+        # Set a threshold for classification (e.g., 0.5)
+        # threshold = 0.5
+        threshold = 0.9
+
+        # Convert probabilities to class indices based on the threshold
+        predicted_labels = (predictions > threshold).astype(int)
+        predicted_labels = np.squeeze(predicted_labels)
+
+        # Calculate confusion matrix
+        cm = confusion_matrix(true_labels, predicted_labels)
+
+        # Print confusion matrix as a table
+        cm_df = pd.DataFrame(cm, index=self.validation_generator.class_indices, columns=self.validation_generator.class_indices)
+        print(f'\nConfusion Matrix - Epoch {epoch}:\n{cm_df}')
+
+        missclass_indices = np.where(np.not_equal(predicted_labels, true_labels))[0]
+
+        # import pdb;pdb.set_trace()
+        with open(f'misclassified_file_paths_epoch_{epoch}.txt', 'w') as file:
+            for idx in missclass_indices:
+                file.write(f"{self.validation_generator.filenames[idx]}\n")
 
 def main(args):
     with open(args.config, 'r') as f:
@@ -24,6 +66,37 @@ def main(args):
         model = TrainDetectionModel.build(width=config['width'],
                                           height=config['height'],
                                           num_channels=config['num_channels'])
+
+        # model = MobileNetV3Small(
+        #     input_shape=(config['width'], config['height'], config['num_channels']),
+        #     alpha=1.0,
+        #     include_top=True,
+        #     weights=None,
+        #     input_tensor=None,
+        #     pooling=None,
+        #     classes=2,
+        #     classifier_activation="sigmoid"
+        # )
+
+        # # Load MobileNetV3Small without the top classification layer
+        # base_model = MobileNetV3Small(
+        #     input_shape=(config['width'], config['height'], config['num_channels']),
+        #     include_top=False,
+        #     weights='imagenet')
+
+        # # Freeze the base model layers
+        # for layer in base_model.layers:
+        #     layer.trainable = False
+
+        # # Add your own classification layers
+        # x = base_model.output
+        # x = GlobalAveragePooling2D()(x)
+        # x = Dense(128, activation='relu')(x)
+        # x = Dense(64, activation='relu')(x)
+        # output = Dense(1, activation='sigmoid')(x)  # Binary classification
+
+        # # Create the final model
+        # model = Model(inputs=base_model.input, outputs=output)
     else:
         raise Exception('Unsupported model type: {}.'.format(args.model_type))
 
@@ -99,7 +172,8 @@ def main(args):
                         monitor='val_loss',
                         save_best_only=True,
                         verbose=True),
-        CSVLogger(os.path.join(output_sub_dir, 'epochs.csv'))
+        CSVLogger(os.path.join(output_sub_dir, 'epochs.csv')),
+        ConfusionMatrixCallback(validation_generator=validation_generator)
     ]
 
     H = model.fit_generator(training_generator,
@@ -110,7 +184,6 @@ def main(args):
                             validation_data=validation_generator,
                             validation_steps=math.ceil(num_validation_samples /
                                                        config['batch_size']))
-
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(

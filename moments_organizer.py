@@ -12,17 +12,25 @@ def filter_events(args):
         os.path.join(args.events_dir, subdir)
         for subdir in os.listdir(args.events_dir)
     ]
+    events_subdirs_sorted = sorted(events_subdirs, key=lambda x: int(os.path.basename(x)), reverse=args.reverse)
     events_subdirs_filtered = []
 
-    for events_subdir in events_subdirs:
+    for idx, events_subdir in enumerate(events_subdirs_sorted):
+        if not (idx % args.event_stride == 0):
+            continue
+
         event_number = int(os.path.basename(events_subdir))
-        if event_number < args.start_event:
+        if (not args.reverse and event_number < args.start_event) or (args.reverse and event_number > args.start_event):
             print(
                 f'Skipping event #{event_number}, less than start event {args.start_event}.'
             )
             continue
 
         moments_file_path = os.path.join(events_subdir, 'moments.pickle')
+        if not os.path.exists(moments_file_path):
+            print(f'Skipping event #{event_number}, no moments.pickle file.')
+            continue
+
         with open(moments_file_path, 'rb') as moments_file:
             moments = pickle.load(moments_file)
 
@@ -54,19 +62,32 @@ def main(args):
         raise Exception('Must specify one or both of --train, --signal.')
 
     for events_subdir in events_subdirs:
+        next_event = False
+
         moments_file_path = os.path.join(events_subdir, 'moments.pickle')
 
         with open(moments_file_path, 'rb') as moments_file:
             moments = pickle.load(moments_file)
 
-        for moment in moments:
+        for idx, moment in enumerate(moments):
             for subject in subjects:
                 if subject == 'train':
+                    if 'train_prediction_value' not in moment or 'train_img_path' not in moment:
+                        print('Old moment format. Skipping event.')
+                        break
+
                     prediction_value = moment['train_prediction_value']
                     img_path = moment['train_img_path']
                 else:
                     prediction_value = moment['signal_prediction_value']
                     img_path = moment['signal_img_paths'][0]
+
+                in_pred_bounds = prediction_value >= args.pred_lower and \
+                                 prediction_value <= args.pred_upper
+                if not in_pred_bounds:
+                    continue
+                if not (idx % args.image_stride == 0):
+                    continue
 
                 base_img_name = os.path.basename(img_path)
                 img_file_path = os.path.join(events_subdir, 'images',
@@ -74,8 +95,7 @@ def main(args):
                 new_img_file = str(moment['timestamp']) + '_' + base_img_name
                 positive_img_file = os.path.join(args.output_dir, subject,
                                                  new_img_file)
-                negative_img_file = os.path.join(args.output_dir, subject,
-                                                 f'no_{subject}', new_img_file)
+                negative_img_file = os.path.join(args.output_dir, f'no_{subject}', new_img_file)
 
                 if os.path.exists(positive_img_file) or os.path.exists(
                         negative_img_file):
@@ -87,6 +107,9 @@ def main(args):
                     continue
 
                 img = cv2.imread(img_file_path)
+                if img is None:
+                    print(f'Failed to read {img_file_path}, skipping.')
+                    continue
 
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 bottom_left_corner_of_text = (10, img.shape[0] - 10)
@@ -108,22 +131,30 @@ def main(args):
                 if key == ord('n'):
                     print('Adding {} to the no_{} folder.'.format(
                         img_file_path, subject))
+                    print(f'New file: {negative_img_file}')
                     shutil.copy(img_file_path, negative_img_file)
                 elif key == ord('t'):
                     print('Adding {} to the {} folder.'.format(
                         img_file_path, subject))
+                    print(f'New file: {positive_img_file}')
                     shutil.copy(img_file_path, positive_img_file)
                 elif key == ord('q'):
                     print('Quitting.')
                     cv2.destroyAllWindows()
                     return
-                elif key == ord('s'):
-                    print(f'Skipping event.')
-                    cv2.destroyAllWindows()
-
                 elif key == ord('f'):
+                    print(f'Skipping event.')
+                    next_event = True
+                elif key == ord('s'):
                     print(f'Skipping moment.')
+
                 cv2.destroyAllWindows()
+
+                if next_event:
+                    break
+
+            if next_event:
+                break
 
         print('Done.')
 
@@ -158,9 +189,21 @@ if __name__ == '__main__':
     arg_parser.add_argument(
         '--ceiling',
         dest='ceiling',
-        type=int,
-        default=10,
+        type=float,
+        default=float('inf'),
         help='# moments must be below this value to be considered an "event".')
+    arg_parser.add_argument(
+        '--pred-lower',
+        dest='pred_lower',
+        type=float,
+        default=0,
+        help='Prediction value lower bound.')
+    arg_parser.add_argument(
+        '--pred-upper',
+        dest='pred_upper',
+        type=float,
+        default=1.0,
+        help='Prediction value upper bound.')
     arg_parser.add_argument(
         '-o',
         '--output-dir',
@@ -173,6 +216,30 @@ if __name__ == '__main__':
         '--start-event',
         dest='start_event',
         type=int,
-        required=True,
+        default=True,
         help='Only consider events after and including this event number.')
+    arg_parser.add_argument(
+        '--image-stride',
+        dest='image_stride',
+        type=int,
+        default=1,
+        help='Number of images to step over.')
+    arg_parser.add_argument(
+        '--event-stride',
+        dest='event_stride',
+        type=int,
+        default=1,
+        help='Number of events to step over.')
+    arg_parser.add_argument(
+        '--negative',
+        dest='negative',
+        default=False,
+        action='store_true',
+        help='Just look at negative images.')
+    arg_parser.add_argument(
+        '--reverse',
+        dest='reverse',
+        default=False,
+        action='store_true',
+        help='Process events in reverse event number order.')
     main(arg_parser.parse_args())
