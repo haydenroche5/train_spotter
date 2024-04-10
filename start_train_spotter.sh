@@ -22,7 +22,9 @@ fi
 
 # Mount the USB drive
 if ! grep -qs "$usb_directory " /proc/mounts; then
-    mount $usb_device $usb_directory >> $startup_log 2>&1
+    if [ -e "$usb_device" ]; then
+        mount $usb_device $usb_directory >> $startup_log 2>&1
+    fi
 fi
 
 # Check if the spotter script is running
